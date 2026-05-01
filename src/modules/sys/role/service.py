@@ -105,7 +105,9 @@ async def update_role(
             raise APIException(msg="角色名称已存在")
 
     # 更新基础信息
-    for field, value in role_data.model_dump(exclude={"menus"}, exclude_unset=True).items():
+    for field, value in role_data.model_dump(
+        exclude={"menus"}, exclude_unset=True
+    ).items():
         if hasattr(role, field):
             setattr(role, field, value)
 

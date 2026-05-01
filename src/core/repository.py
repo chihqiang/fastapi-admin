@@ -29,7 +29,6 @@ class BaseRepository(Generic[ModelType]):
                 if hasattr(self.model, field):
                     stmt = stmt.where(getattr(self.model, field) == value)  # type: ignore[arg-type]
 
-
         stmt = stmt.offset(skip).limit(limit)
         result = await self.db.execute(stmt)
         return list(result.scalars().unique().all())

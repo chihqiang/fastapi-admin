@@ -54,7 +54,9 @@ async def menu_detail(id: int, db: Annotated[AsyncSession, Depends(get_db)]):
 
 
 @router.post("/create", response_model=ApiResponse[MenuInfo])
-async def menu_create(menu_data: MenuCreate, db: Annotated[AsyncSession, Depends(get_db)]):
+async def menu_create(
+    menu_data: MenuCreate, db: Annotated[AsyncSession, Depends(get_db)]
+):
     """
     创建菜单
 
@@ -76,7 +78,9 @@ async def menu_create(menu_data: MenuCreate, db: Annotated[AsyncSession, Depends
 
 
 @router.put("/update", response_model=ApiResponse[MenuInfo])
-async def menu_update(menu_data: MenuUpdate, db: Annotated[AsyncSession, Depends(get_db)]):
+async def menu_update(
+    menu_data: MenuUpdate, db: Annotated[AsyncSession, Depends(get_db)]
+):
     """
     更新菜单
 

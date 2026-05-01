@@ -46,7 +46,9 @@ async def role_detail(id: int, db: Annotated[AsyncSession, Depends(get_db)]):
 
 
 @router.post("/create", response_model=ApiResponse[RoleInfo])
-async def role_create(role_data: RoleCreate, db: Annotated[AsyncSession, Depends(get_db)]):
+async def role_create(
+    role_data: RoleCreate, db: Annotated[AsyncSession, Depends(get_db)]
+):
     """
     创建角色
 
@@ -61,7 +63,9 @@ async def role_create(role_data: RoleCreate, db: Annotated[AsyncSession, Depends
 
 
 @router.put("/update", response_model=ApiResponse[RoleInfo])
-async def role_update(role_data: RoleUpdate, db: Annotated[AsyncSession, Depends(get_db)]):
+async def role_update(
+    role_data: RoleUpdate, db: Annotated[AsyncSession, Depends(get_db)]
+):
     """
     更新角色
 
