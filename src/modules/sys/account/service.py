@@ -1,7 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.core.exception import APIException
-from src.modules.auth.utils import get_password_hash
+from src.models.auth import Account
 from src.modules.sys.account.repository import AccountRepository
 from src.modules.sys.account.schemas import (AccountCreate, AccountInfo,
                                              AccountListRequest,
@@ -54,12 +54,15 @@ async def create_account(account_data: AccountCreate, db: AsyncSession) -> Accou
     if await repo.get_by_email(account_data.email):
         raise APIException(msg="邮箱已存在")
 
-    # 准备数据
-    account_dict = account_data.model_dump(exclude={"roles"})
-    account_dict["password"] = get_password_hash(account_data.password)
-
-    # 创建基础账号
-    account = await repo.create(account_dict)
+    # 创建账号
+    account = Account(
+        name=account_data.name,
+        email=account_data.email,
+        status=account_data.status,
+    )
+    account.set_password(account_data.password)
+    await db.commit()
+    await db.refresh(account)
 
     # 关联角色
     if account_data.roles:
@@ -89,13 +92,17 @@ async def update_account(
             raise APIException(msg="邮箱已存在")
 
     # 更新基础信息
-    update_data = account_data.model_dump(
+    for field, value in account_data.model_dump(
         exclude={"roles", "password"}, exclude_unset=True
-    )
-    if account_data.password:
-        update_data["password"] = get_password_hash(account_data.password)
+    ).items():
+        setattr(account, field, value)
 
-    await repo.update(account, update_data)
+    # 更新密码
+    if account_data.password:
+        account.set_password(account_data.password)
+
+    await db.commit()
+    await db.refresh(account)
 
     # 更新角色
     if account_data.roles is not None:

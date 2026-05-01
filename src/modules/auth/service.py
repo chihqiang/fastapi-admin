@@ -1,4 +1,3 @@
-from datetime import timedelta
 from functools import lru_cache
 
 from fastapi import Depends, Request
@@ -12,9 +11,6 @@ from src.core.exception import (APIException, AuthenticationException,
                                 PermissionException)
 from src.models.auth import Account, Role
 from src.modules.auth.schemas import LoginForm, RegisterForm
-from src.modules.auth.utils import (create_access_token, create_refresh_token,
-                                    get_password_hash, verify_access_token,
-                                    verify_password)
 
 # ==============================
 # 认证模块业务逻辑层：用户注册、登录认证
@@ -49,11 +45,9 @@ async def register_new_account(form: RegisterForm, db: AsyncSession) -> Account:
     if existing:
         raise APIException(msg="邮箱已注册")
 
-    # 密码加密处理
-    hashed_pwd = get_password_hash(form.password)
-
     # 创建新账户对象
-    account = Account(name=form.name, email=form.email, password=hashed_pwd)
+    account = Account(name=form.name, email=form.email, password=form.password)
+    account.set_password(form.password)
 
     # 添加到数据库会话并提交事务
     db.add(account)
@@ -92,22 +86,12 @@ async def authenticate_account(form_data: LoginForm, db: AsyncSession):
         raise APIException(msg="账户不存在")
 
     # 密码校验失败
-    if not verify_password(form_data.password, str(account.password)):
+    if not account.verify_password(form_data.password):
         raise APIException(msg="账号或密码错误")
 
-    # 计算Token过期时间
-    access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-
-    # 生成JWT访问令牌，携带用户ID和邮箱作为载荷
-    access_token = create_access_token(
-        data={"id": account.id, "email": account.email},
-        expires_delta=access_token_expires,
-    )
-
-    # 生成刷新令牌
-    refresh_token = create_refresh_token(
-        data={"id": account.id, "email": account.email}
-    )
+    # 生成JWT访问令牌和刷新令牌
+    access_token = account.create_access_token()
+    refresh_token = account.create_refresh_token()
 
     # 构造登录成功返回数据
     return {
@@ -136,7 +120,7 @@ async def refresh_access_token(refresh_token: str, db: AsyncSession) -> dict[str
         AuthenticationException: 刷新令牌无效或过期时抛出
     """
     # 验证刷新令牌
-    payload = verify_access_token(refresh_token)
+    payload = Account.verify_access_token(refresh_token)
     if not payload:
         raise AuthenticationException(msg="刷新令牌已过期，请重新登录")
 
@@ -156,17 +140,9 @@ async def refresh_access_token(refresh_token: str, db: AsyncSession) -> dict[str
     if not account:
         raise AuthenticationException(msg="账户不存在")
 
-    # 生成新的访问令牌
-    access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-    new_access_token = create_access_token(
-        data={"id": account.id, "email": account.email},
-        expires_delta=access_token_expires,
-    )
-
-    # 生成新的刷新令牌（实现滚动刷新）
-    new_refresh_token = create_refresh_token(
-        data={"id": account.id, "email": account.email}
-    )
+    # 生成新的访问令牌和刷新令牌
+    new_access_token = account.create_access_token()
+    new_refresh_token = account.create_refresh_token()
 
     return {
         "access_token": new_access_token,
@@ -204,7 +180,7 @@ async def get_current_account(
         raise AuthenticationException(msg="凭证格式错误")
 
     # 校验 token
-    payload = verify_access_token(token)
+    payload = Account.verify_access_token(token)
     if not payload:
         raise AuthenticationException(msg="登录已过期，请重新登录")
 

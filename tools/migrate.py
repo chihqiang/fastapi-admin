@@ -7,7 +7,6 @@ from src.core.config import settings  # noqa: E402
 from src.core.database import Base, engine  # noqa: E402
 from src.models.auth import (Account, Menu, Role, account_roles,  # noqa: E402
                              role_menus)
-from src.modules.auth.utils import get_password_hash  # noqa: E402
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -447,9 +446,9 @@ async def init_data():
         admin_account = Account(
             name="超级管理员",
             email="admin@example.com",
-            password=get_password_hash("123456"),
             status=True,
         )
+        admin_account.set_password("123456")
         session.add(admin_account)
         await session.flush()
 

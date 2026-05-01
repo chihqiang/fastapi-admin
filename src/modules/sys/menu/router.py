@@ -76,9 +76,7 @@ async def menu_create(menu_data: MenuCreate, db: AsyncSession = Depends(get_db))
 
 
 @router.put("/update", response_model=ApiResponse[MenuInfo])
-async def menu_update(
-    menu_data: MenuUpdate, db: AsyncSession = Depends(get_db)
-):
+async def menu_update(menu_data: MenuUpdate, db: AsyncSession = Depends(get_db)):
     """
     更新菜单
 

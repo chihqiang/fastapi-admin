@@ -61,9 +61,7 @@ async def role_create(role_data: RoleCreate, db: AsyncSession = Depends(get_db))
 
 
 @router.put("/update", response_model=ApiResponse[RoleInfo])
-async def role_update(
-    role_data: RoleUpdate, db: AsyncSession = Depends(get_db)
-):
+async def role_update(role_data: RoleUpdate, db: AsyncSession = Depends(get_db)):
     """
     更新角色
 
