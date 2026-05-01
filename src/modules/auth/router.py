@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -17,8 +17,8 @@ router = APIRouter(prefix="/auth", tags=["认证模块"])
 
 @router.post("/register")
 async def register(
-    form: RegisterForm, db: AsyncSession = Depends(get_db)
-) -> ApiResponse[Any]:
+    form: RegisterForm, db: Annotated[AsyncSession, Depends(get_db)]
+) -> ApiResponse[dict[str, Any]]:
     account = await register_new_account(form, db)
     return success(
         msg="注册成功",
@@ -28,8 +28,8 @@ async def register(
 
 @router.post("/login")
 async def login(
-    login_form: LoginForm, db: AsyncSession = Depends(get_db)
-) -> ApiResponse[Any]:
+    login_form: LoginForm, db: Annotated[AsyncSession, Depends(get_db)]
+) -> ApiResponse[dict[str, Any]]:
     data = await authenticate_account(login_form, db)
     return success(
         msg="登录成功",
@@ -39,15 +39,15 @@ async def login(
 
 @router.post("/refresh")
 async def refresh_token(
-    form: RefreshTokenForm, db: AsyncSession = Depends(get_db)
-) -> ApiResponse[Any]:
+    form: RefreshTokenForm, db: Annotated[AsyncSession, Depends(get_db)]
+) -> ApiResponse[dict[str, Any]]:
     """使用刷新令牌获取新的访问令牌"""
     data = await refresh_access_token(form.refresh_token, db)
     return success(msg="刷新成功", data=data)
 
 
 @router.get("/user/profile")
-async def user_profile(request: Request, db: AsyncSession = Depends(get_db)):
+async def user_profile(request: Request, db: Annotated[AsyncSession, Depends(get_db)]):
     account = await get_current_account(request, db)
     # 构建角色信息列表
     roles = [RoleInfo(id=role.id, name=role.name) for role in account.roles]

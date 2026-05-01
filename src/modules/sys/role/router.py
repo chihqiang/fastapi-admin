@@ -1,4 +1,4 @@
-from typing import List
+from typing import Annotated
 
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -19,8 +19,8 @@ router = APIRouter(prefix="/role", tags=["系统管理-角色管理"])
 
 @router.get("/list", response_model=ApiResponse[RoleListResponse])
 async def role_list(
-    request: RoleListRequest = Depends(),
-    db: AsyncSession = Depends(get_db),
+    request: Annotated[RoleListRequest, Depends()],
+    db: Annotated[AsyncSession, Depends(get_db)],
 ):
     """
     获取角色列表
@@ -35,7 +35,7 @@ async def role_list(
 
 
 @router.get("/detail", response_model=ApiResponse[RoleInfo])
-async def role_detail(id: int, db: AsyncSession = Depends(get_db)):
+async def role_detail(id: int, db: Annotated[AsyncSession, Depends(get_db)]):
     """
     获取角色详情
 
@@ -46,7 +46,7 @@ async def role_detail(id: int, db: AsyncSession = Depends(get_db)):
 
 
 @router.post("/create", response_model=ApiResponse[RoleInfo])
-async def role_create(role_data: RoleCreate, db: AsyncSession = Depends(get_db)):
+async def role_create(role_data: RoleCreate, db: Annotated[AsyncSession, Depends(get_db)]):
     """
     创建角色
 
@@ -61,7 +61,7 @@ async def role_create(role_data: RoleCreate, db: AsyncSession = Depends(get_db))
 
 
 @router.put("/update", response_model=ApiResponse[RoleInfo])
-async def role_update(role_data: RoleUpdate, db: AsyncSession = Depends(get_db)):
+async def role_update(role_data: RoleUpdate, db: Annotated[AsyncSession, Depends(get_db)]):
     """
     更新角色
 
@@ -77,7 +77,7 @@ async def role_update(role_data: RoleUpdate, db: AsyncSession = Depends(get_db))
 
 
 @router.delete("/delete", response_model=ApiResponse[None])
-async def role_delete(id: int, db: AsyncSession = Depends(get_db)):
+async def role_delete(id: int, db: Annotated[AsyncSession, Depends(get_db)]):
     """
     删除角色
 
@@ -87,8 +87,8 @@ async def role_delete(id: int, db: AsyncSession = Depends(get_db)):
     return success(msg="删除成功")
 
 
-@router.get("/all", response_model=ApiResponse[List[RoleInfo]])
-async def role_all(db: AsyncSession = Depends(get_db)):
+@router.get("/all", response_model=ApiResponse[list[RoleInfo]])
+async def role_all(db: Annotated[AsyncSession, Depends(get_db)]):
     """
     获取所有角色列表
     """
@@ -98,7 +98,7 @@ async def role_all(db: AsyncSession = Depends(get_db)):
 
 @router.post("/associate-menus", response_model=ApiResponse[RoleInfo])
 async def role_associate_menus(
-    request: RoleAssociateMenusRequest, db: AsyncSession = Depends(get_db)
+    request: RoleAssociateMenusRequest, db: Annotated[AsyncSession, Depends(get_db)]
 ):
     """
     关联角色和菜单

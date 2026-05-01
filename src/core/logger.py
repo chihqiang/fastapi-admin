@@ -1,17 +1,19 @@
 import json
 import logging
 import sys
-from datetime import datetime
+from datetime import datetime, timezone
+from typing_extensions import override
 
 
 class JSONFormatter(logging.Formatter):
     """自定义JSON日志格式化器，将日志输出为标准JSON格式"""
 
+    @override
     def format(self, record):
         # 构建基础日志对象，包含核心字段
         log_obj = {
             # UTC时间戳，ISO格式
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             # 日志级别
             "level": record.levelname,
             # 日志消息内容

@@ -1,5 +1,3 @@
-from typing import List
-
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.core.exception import APIException
@@ -65,7 +63,7 @@ async def get_menu_list(request: MenuListRequest, db: AsyncSession) -> MenuListR
     )
 
 
-async def get_all_menus(db: AsyncSession) -> List[MenuInfo]:
+async def get_all_menus(db: AsyncSession) -> list[MenuInfo]:
     """获取所有菜单列表（用于下拉选择）"""
     repo = MenuRepository(db)
     menus = await repo.list_all()

@@ -1,8 +1,7 @@
-from typing import List
-
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.core.exception import APIException
+from src.models.auth import Role
 from src.modules.sys.role.repository import RoleRepository
 from src.modules.sys.role.schemas import (RoleCreate, RoleInfo,
                                           RoleListRequest, RoleListResponse,
@@ -69,18 +68,23 @@ async def create_role(role_data: RoleCreate, db: AsyncSession) -> RoleInfo:
     if await repo.get_by_name(role_data.name):
         raise APIException(msg="角色名称已存在")
 
-    # 创建基础角色
-    role_dict = role_data.model_dump(exclude={"menus"})
-    role = await repo.create(role_dict)
+    # 创建基础角色（不立即 commit）
+    role = Role(
+        name=role_data.name,
+        sort=role_data.sort,
+        status=role_data.status,
+        remark=role_data.remark,
+    )
+    db.add(role)
 
     # 关联菜单
     if role_data.menus:
         menu_ids = [menu.id for menu in role_data.menus]
-        # 重新获取角色以预加载 menus 关系，避免懒加载问题
-        role = await repo.get_with_menus(role.id)
-        role.menus = await repo.get_menus_by_ids(menu_ids)
-        await db.commit()
-        await db.refresh(role)
+        menus = await repo.get_menus_by_ids(menu_ids)
+        role.menus = menus
+
+    await db.commit()
+    await db.refresh(role)
 
     return await get_role_detail(role.id, db)
 
@@ -101,15 +105,17 @@ async def update_role(
             raise APIException(msg="角色名称已存在")
 
     # 更新基础信息
-    update_data = role_data.model_dump(exclude={"menus"}, exclude_unset=True)
-    await repo.update(role, update_data)
+    for field, value in role_data.model_dump(exclude={"menus"}, exclude_unset=True).items():
+        if hasattr(role, field):
+            setattr(role, field, value)
 
-    # 更新菜单
+    # 更新菜单（在同一事务中）
     if role_data.menus is not None:
         menu_ids = [menu.id for menu in role_data.menus]
         role.menus = await repo.get_menus_by_ids(menu_ids)
-        await db.commit()
-        await db.refresh(role)
+
+    await db.commit()
+    await db.refresh(role)
 
     return await get_role_detail(role_id, db)
 
@@ -148,7 +154,7 @@ async def delete_role(role_id: int, db: AsyncSession) -> None:
         raise APIException(msg="角色不存在")
 
 
-async def get_all_roles(db: AsyncSession) -> List[RoleInfo]:
+async def get_all_roles(db: AsyncSession) -> list[RoleInfo]:
     """获取所有角色列表（不分页，用于下拉选择）"""
     repo = RoleRepository(db)
     roles = await repo.list_all()

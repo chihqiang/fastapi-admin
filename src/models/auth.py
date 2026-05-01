@@ -1,5 +1,5 @@
-from datetime import datetime, timedelta
-from typing import List, Union
+from datetime import datetime, timedelta, timezone
+from typing import List
 
 import bcrypt
 from jose import JWTError, jwt
@@ -131,7 +131,7 @@ class Account(Base):
     status: Mapped[bool] = mapped_column(default=True, comment="账号是否启用")
 
     # 多对多：用户绑定多个角色
-    roles: Mapped[List["Role"]] = relationship(
+    roles: Mapped[list["Role"]] = relationship(
         secondary=account_roles, back_populates="accounts"
     )
 
@@ -150,23 +150,18 @@ class Account(Base):
         except (ValueError, AttributeError):
             return False
 
-    def create_access_token(self, expires_delta: Union[timedelta, None] = None) -> str:
+    def create_access_token(self, expires_delta: timedelta | None = None) -> str:
         """创建JWT访问令牌"""
-        to_encode = {"id": self.id, "email": self.email}
-        if expires_delta:
-            expire = datetime.utcnow() + expires_delta
-        else:
-            expire = datetime.utcnow() + timedelta(
-                minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
-            )
-        to_encode.update({"exp": expire, "type": "access"})
+        expire = datetime.now(timezone.utc) + (
+            expires_delta or timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+        )
+        to_encode = {"id": self.id, "email": self.email, "exp": expire, "type": "access"}
         return jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
 
     def create_refresh_token(self) -> str:
         """创建JWT刷新令牌"""
-        to_encode = {"id": self.id, "email": self.email}
-        expire = datetime.utcnow() + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
-        to_encode.update({"exp": expire, "type": "refresh"})
+        expire = datetime.now(timezone.utc) + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
+        to_encode = {"id": self.id, "email": self.email, "exp": expire, "type": "refresh"}
         return jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
 
     @staticmethod

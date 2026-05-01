@@ -1,4 +1,4 @@
-from typing import List
+from typing import Annotated
 
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -17,8 +17,8 @@ router = APIRouter(prefix="/menu", tags=["系统管理-菜单管理"])
 
 @router.get("/list", response_model=ApiResponse[MenuListResponse])
 async def menu_list(
-    request: MenuListRequest = Depends(),
-    db: AsyncSession = Depends(get_db),
+    request: Annotated[MenuListRequest, Depends()],
+    db: Annotated[AsyncSession, Depends(get_db)],
 ):
     """
     获取菜单列表
@@ -33,8 +33,8 @@ async def menu_list(
     return success(data=result)
 
 
-@router.get("/all", response_model=ApiResponse[List[MenuInfo]])
-async def menu_all(db: AsyncSession = Depends(get_db)):
+@router.get("/all", response_model=ApiResponse[list[MenuInfo]])
+async def menu_all(db: Annotated[AsyncSession, Depends(get_db)]):
     """
     获取所有菜单列表（用于下拉选择）
     """
@@ -43,7 +43,7 @@ async def menu_all(db: AsyncSession = Depends(get_db)):
 
 
 @router.get("/detail", response_model=ApiResponse[MenuInfo])
-async def menu_detail(id: int, db: AsyncSession = Depends(get_db)):
+async def menu_detail(id: int, db: Annotated[AsyncSession, Depends(get_db)]):
     """
     获取菜单详情
 
@@ -54,7 +54,7 @@ async def menu_detail(id: int, db: AsyncSession = Depends(get_db)):
 
 
 @router.post("/create", response_model=ApiResponse[MenuInfo])
-async def menu_create(menu_data: MenuCreate, db: AsyncSession = Depends(get_db)):
+async def menu_create(menu_data: MenuCreate, db: Annotated[AsyncSession, Depends(get_db)]):
     """
     创建菜单
 
@@ -76,7 +76,7 @@ async def menu_create(menu_data: MenuCreate, db: AsyncSession = Depends(get_db))
 
 
 @router.put("/update", response_model=ApiResponse[MenuInfo])
-async def menu_update(menu_data: MenuUpdate, db: AsyncSession = Depends(get_db)):
+async def menu_update(menu_data: MenuUpdate, db: Annotated[AsyncSession, Depends(get_db)]):
     """
     更新菜单
 
@@ -99,7 +99,7 @@ async def menu_update(menu_data: MenuUpdate, db: AsyncSession = Depends(get_db))
 
 
 @router.delete("/delete", response_model=ApiResponse[None])
-async def menu_delete(id: int, db: AsyncSession = Depends(get_db)):
+async def menu_delete(id: int, db: Annotated[AsyncSession, Depends(get_db)]):
     """
     删除菜单
 

@@ -3,7 +3,7 @@
 提供统一的分页请求参数和响应模型，所有列表接口应复用这些基础模型。
 """
 
-from typing import Generic, List, TypeVar
+from typing import Generic, TypeVar
 
 from pydantic import BaseModel, Field, computed_field
 
@@ -43,7 +43,7 @@ class PageResponse(BaseModel, Generic[T]):
         >>> response = UserListResponse(data=user_list, total=100, page=1, size=10)
     """
 
-    data: List[T] = Field(description="数据列表")
+    data: list[T] = Field(description="数据列表")
     total: int = Field(ge=0, description="总记录数")
     page: int = Field(ge=1, description="当前页码")
     size: int = Field(ge=1, description="每页数量")

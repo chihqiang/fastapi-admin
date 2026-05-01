@@ -1,6 +1,6 @@
-from typing import List, Optional
+from typing import ClassVar
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from src.schemas.pagination import PageParams, PageResponse
 
@@ -18,10 +18,10 @@ class MenuBase(BaseModel):
     api_method: str = "*"
     visible: bool = True
     status: bool = True
-    pid: Optional[int] = None
+    pid: int | None = None
     remark: str = ""
 
-    model_config = {"from_attributes": True}
+    model_config: ClassVar[ConfigDict] = ConfigDict(from_attributes=True)
 
 
 class MenuCreate(MenuBase):
@@ -40,7 +40,7 @@ class MenuInfo(MenuBase):
     """菜单信息响应模型"""
 
     id: int
-    children: List["MenuInfo"] = []
+    children: list["MenuInfo"] = []
 
 
 class MenuListRequest(PageParams):
@@ -49,9 +49,9 @@ class MenuListRequest(PageParams):
     继承 PageParams，添加菜单特有的查询字段
     """
 
-    id: Optional[int] = Field(default=None, description="菜单ID，用于精确搜索")
-    name: Optional[str] = Field(default=None, description="菜单名称，用于模糊搜索")
-    status: Optional[bool] = Field(default=None, description="状态筛选")
+    id: int | None = Field(default=None, description="菜单ID，用于精确搜索")
+    name: str | None = Field(default=None, description="菜单名称，用于模糊搜索")
+    status: bool | None = Field(default=None, description="状态筛选")
 
 
 class MenuListResponse(PageResponse[MenuInfo]):

@@ -16,7 +16,7 @@ async def get_account_list(
     repo = AccountRepository(db)
 
     # 获取总数
-    filters = {"id": request.id} if request.id else None
+    filters: dict[str, object] | None = {"id": request.id} if request.id else None
     total = await repo.count(filters=filters)
 
     # 获取列表
@@ -54,24 +54,23 @@ async def create_account(account_data: AccountCreate, db: AsyncSession) -> Accou
     if await repo.get_by_email(account_data.email):
         raise APIException(msg="邮箱已存在")
 
-    # 创建账号
+    # 创建账号（不立即 commit，保持在同一事务中）
     account = Account(
         name=account_data.name,
         email=account_data.email,
         status=account_data.status,
     )
     account.set_password(account_data.password)
-    await db.commit()
-    await db.refresh(account)
+    db.add(account)
 
     # 关联角色
     if account_data.roles:
         role_ids = [role.id for role in account_data.roles]
-        # 重新获取账号以预加载 roles 关系，避免懒加载问题
-        account = await repo.get_with_roles(account.id)
-        account.roles = await repo.get_roles_by_ids(role_ids)
-        await db.commit()
-        await db.refresh(account)
+        roles = await repo.get_roles_by_ids(role_ids)
+        account.roles = roles
+
+    await db.commit()
+    await db.refresh(account)
 
     return await get_account_detail(account.id, db)
 
@@ -101,22 +100,20 @@ async def update_account(
     if account_data.password:
         account.set_password(account_data.password)
 
-    await db.commit()
-    await db.refresh(account)
-
-    # 更新角色
+    # 更新角色（在同一事务中）
     if account_data.roles is not None:
         role_ids = [role.id for role in account_data.roles]
-        # 重新获取以预加载 roles 关系，避免懒加载问题
-        account = await repo.get_with_roles(account_id)
         account.roles = await repo.get_roles_by_ids(role_ids)
-        await db.commit()
-        await db.refresh(account)
+
+    await db.commit()
+    await db.refresh(account)
 
     return await get_account_detail(account_id, db)
 
 
-async def delete_account(account_id: int, db: AsyncSession, current_account) -> None:
+async def delete_account(
+    account_id: int, db: AsyncSession, current_account: Account
+) -> None:
     """删除账号"""
     if account_id == current_account.id:
         raise APIException(msg="不能删除当前登录账户")

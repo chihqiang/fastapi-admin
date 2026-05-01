@@ -1,6 +1,6 @@
-from typing import List, Optional
+from typing import ClassVar
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from src.schemas.pagination import PageParams, PageResponse
 
@@ -9,7 +9,7 @@ class MenuId(BaseModel):
     """菜单ID模型"""
 
     id: int
-    name: Optional[str] = None
+    name: str | None = None
 
 
 class RoleBase(BaseModel):
@@ -20,20 +20,20 @@ class RoleBase(BaseModel):
     status: bool = True
     remark: str = ""
 
-    model_config = {"from_attributes": True}
+    model_config: ClassVar[ConfigDict] = ConfigDict(from_attributes=True)
 
 
 class RoleCreate(RoleBase):
     """创建角色请求模型"""
 
-    menus: List[MenuId] = Field(default_factory=list)
+    menus: list[MenuId] = Field(default_factory=list)
 
 
 class RoleUpdate(RoleBase):
     """更新角色请求模型"""
 
     id: int
-    menus: Optional[List[MenuId]] = None
+    menus: list[MenuId] | None = None
 
 
 class MenuInfo(BaseModel):
@@ -42,14 +42,14 @@ class MenuInfo(BaseModel):
     id: int
     name: str
 
-    model_config = {"from_attributes": True}
+    model_config: ClassVar[ConfigDict] = ConfigDict(from_attributes=True)
 
 
 class RoleInfo(RoleBase):
     """角色信息响应模型"""
 
     id: int
-    menus: List[MenuInfo]
+    menus: list[MenuInfo]
 
 
 class RoleListRequest(PageParams):
@@ -58,8 +58,8 @@ class RoleListRequest(PageParams):
     继承 PageParams，添加角色特有的查询字段
     """
 
-    id: Optional[int] = Field(default=None, description="角色ID，用于精确搜索")
-    name: Optional[str] = Field(default=None, description="角色名称，用于模糊搜索")
+    id: int | None = Field(default=None, description="角色ID，用于精确搜索")
+    name: str | None = Field(default=None, description="角色名称，用于模糊搜索")
 
 
 class RoleListResponse(PageResponse[RoleInfo]):
@@ -78,4 +78,4 @@ class RoleAssociateMenusRequest(BaseModel):
     """关联角色和菜单请求模型"""
 
     id: int
-    menu_ids: List[int]
+    menu_ids: list[int]

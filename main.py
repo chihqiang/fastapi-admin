@@ -12,16 +12,14 @@ from src.modules.auth import router as auth_router
 from src.modules.sys import route as sys_router
 from src.schemas.response import success
 
-logger = logging.getLogger(__name__)
-
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     setup_logging()
-    logger.info("Starting up...")
+    logging.info("Starting up...")
     yield
     # Shutdown logic
-    logger.info("Shutting down...")
+    logging.info("Shutting down...")
 
 
 app = FastAPI(title=settings.PROJECT_NAME, lifespan=lifespan)

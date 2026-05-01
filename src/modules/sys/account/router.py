@@ -1,7 +1,10 @@
-from fastapi import APIRouter, Depends, Request
+from typing import Annotated
+
+from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.core.database import get_db
+from src.models.auth import Account
 from src.modules.auth.service import get_current_account
 from src.modules.sys.account.schemas import (AccountCreate, AccountInfo,
                                              AccountListRequest,
@@ -17,8 +20,8 @@ router = APIRouter(prefix="/account", tags=["系统管理-账号管理"])
 
 @router.get("/list", response_model=ApiResponse[AccountListResponse])
 async def account_list(
-    request: AccountListRequest = Depends(),
-    db: AsyncSession = Depends(get_db),
+    request: Annotated[AccountListRequest, Depends()],
+    db: Annotated[AsyncSession, Depends(get_db)],
 ):
     """
     获取账号列表
@@ -32,7 +35,7 @@ async def account_list(
 
 
 @router.get("/detail", response_model=ApiResponse[AccountInfo])
-async def account_detail(id: int, db: AsyncSession = Depends(get_db)):
+async def account_detail(id: int, db: Annotated[AsyncSession, Depends(get_db)]):
     """
     获取账号详情
 
@@ -44,7 +47,7 @@ async def account_detail(id: int, db: AsyncSession = Depends(get_db)):
 
 @router.post("/create", response_model=ApiResponse[AccountInfo])
 async def account_create(
-    account_data: AccountCreate, db: AsyncSession = Depends(get_db)
+    account_data: AccountCreate, db: Annotated[AsyncSession, Depends(get_db)]
 ):
     """
     创建账号
@@ -61,7 +64,7 @@ async def account_create(
 
 @router.put("/update", response_model=ApiResponse[AccountInfo])
 async def account_update(
-    account_data: AccountUpdate, db: AsyncSession = Depends(get_db)
+    account_data: AccountUpdate, db: Annotated[AsyncSession, Depends(get_db)]
 ):
     """
     更新账号
@@ -80,9 +83,8 @@ async def account_update(
 @router.delete("/delete", response_model=ApiResponse[None])
 async def account_delete(
     id: int,
-    request: Request,
-    db: AsyncSession = Depends(get_db),
-    current_account=Depends(get_current_account),
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_account: Annotated[Account, Depends(get_current_account)],
 ):
     """
     删除账号
