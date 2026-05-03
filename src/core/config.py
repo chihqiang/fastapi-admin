@@ -13,7 +13,7 @@ class Settings(BaseSettings):
         env_file=".env", env_file_encoding="utf-8", case_sensitive=True
     )
     PROJECT_NAME: str = "FastAPI Admin"
-    API_V1_STR: str = "/api/v1"
+    API_V1_PREFIX: str = "/api/v1"
 
     # ================================================= #
     # ******************* 登录认证配置 ****************** #

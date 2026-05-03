@@ -17,7 +17,12 @@ from src.schemas.response import ApiResponse, success
 router = APIRouter(prefix="/menu", tags=["系统管理-菜单管理"])
 
 
-@router.get("/list", response_model=ApiResponse[MenuListResponse])
+@router.get(
+    "/list",
+    summary="获取菜单列表",
+    description="分页查询菜单列表，支持按ID、名称精确搜索和状态筛选",
+    response_model=ApiResponse[MenuListResponse],
+)
 async def menu_list(
     request: Annotated[MenuListRequest, Depends()],
     db: Annotated[AsyncSession, Depends(get_db)],
@@ -38,7 +43,12 @@ async def menu_list(
     return success(data=result)
 
 
-@router.get("/all", response_model=ApiResponse[list[MenuInfo]])
+@router.get(
+    "/all",
+    summary="获取所有菜单",
+    description="获取所有菜单列表，不分页，用于下拉选择和树形展示",
+    response_model=ApiResponse[list[MenuInfo]],
+)
 async def menu_all(
     db: Annotated[AsyncSession, Depends(get_db)],
     _: Annotated[
@@ -52,7 +62,12 @@ async def menu_all(
     return success(data=result)
 
 
-@router.get("/detail", response_model=ApiResponse[MenuInfo])
+@router.get(
+    "/detail",
+    summary="获取菜单详情",
+    description="根据菜单ID获取菜单详细信息",
+    response_model=ApiResponse[MenuInfo],
+)
 async def menu_detail(
     id: int,
     db: Annotated[AsyncSession, Depends(get_db)],
@@ -69,7 +84,12 @@ async def menu_detail(
     return success(data=result)
 
 
-@router.post("/create", response_model=ApiResponse[MenuInfo])
+@router.post(
+    "/create",
+    summary="创建菜单",
+    description="创建新菜单，支持目录、菜单、按钮三种类型",
+    response_model=ApiResponse[MenuInfo],
+)
 async def menu_create(
     menu_data: MenuCreate,
     db: Annotated[AsyncSession, Depends(get_db)],
@@ -97,7 +117,12 @@ async def menu_create(
     return success(msg="创建成功", data=result)
 
 
-@router.put("/update", response_model=ApiResponse[MenuInfo])
+@router.put(
+    "/update",
+    summary="更新菜单",
+    description="更新菜单信息，支持修改菜单类型、路径、组件等属性",
+    response_model=ApiResponse[MenuInfo],
+)
 async def menu_update(
     menu_data: MenuUpdate,
     db: Annotated[AsyncSession, Depends(get_db)],
@@ -126,7 +151,12 @@ async def menu_update(
     return success(msg="更新成功", data=result)
 
 
-@router.delete("/delete", response_model=ApiResponse[None])
+@router.delete(
+    "/delete",
+    summary="删除菜单",
+    description="根据菜单ID删除菜单",
+    response_model=ApiResponse[None],
+)
 async def menu_delete(
     id: int,
     db: Annotated[AsyncSession, Depends(get_db)],

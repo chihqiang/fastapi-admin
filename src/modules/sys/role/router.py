@@ -19,7 +19,12 @@ from src.schemas.response import ApiResponse, success
 router = APIRouter(prefix="/role", tags=["系统管理-角色管理"])
 
 
-@router.get("/list", response_model=ApiResponse[RoleListResponse])
+@router.get(
+    "/list",
+    summary="获取角色列表",
+    description="分页查询角色列表，支持按ID精确搜索和名称模糊搜索",
+    response_model=ApiResponse[RoleListResponse],
+)
 async def role_list(
     request: Annotated[RoleListRequest, Depends()],
     db: Annotated[AsyncSession, Depends(get_db)],
@@ -39,7 +44,12 @@ async def role_list(
     return success(data=result)
 
 
-@router.get("/detail", response_model=ApiResponse[RoleInfo])
+@router.get(
+    "/detail",
+    summary="获取角色详情",
+    description="根据角色ID获取角色详细信息",
+    response_model=ApiResponse[RoleInfo],
+)
 async def role_detail(
     id: int,
     db: Annotated[AsyncSession, Depends(get_db)],
@@ -56,7 +66,12 @@ async def role_detail(
     return success(data=result)
 
 
-@router.post("/create", response_model=ApiResponse[RoleInfo])
+@router.post(
+    "/create",
+    summary="创建角色",
+    description="创建新角色，可关联菜单权限",
+    response_model=ApiResponse[RoleInfo],
+)
 async def role_create(
     role_data: RoleCreate,
     db: Annotated[AsyncSession, Depends(get_db)],
@@ -77,7 +92,12 @@ async def role_create(
     return success(msg="创建成功", data=result)
 
 
-@router.put("/update", response_model=ApiResponse[RoleInfo])
+@router.put(
+    "/update",
+    summary="更新角色",
+    description="更新角色信息，可修改关联的菜单权限",
+    response_model=ApiResponse[RoleInfo],
+)
 async def role_update(
     role_data: RoleUpdate,
     db: Annotated[AsyncSession, Depends(get_db)],
@@ -99,7 +119,12 @@ async def role_update(
     return success(msg="更新成功", data=result)
 
 
-@router.delete("/delete", response_model=ApiResponse[None])
+@router.delete(
+    "/delete",
+    summary="删除角色",
+    description="根据角色ID删除角色",
+    response_model=ApiResponse[None],
+)
 async def role_delete(
     id: int,
     db: Annotated[AsyncSession, Depends(get_db)],
@@ -117,7 +142,12 @@ async def role_delete(
     return success(msg="删除成功")
 
 
-@router.get("/all", response_model=ApiResponse[list[RoleInfo]])
+@router.get(
+    "/all",
+    summary="获取所有角色",
+    description="获取所有角色列表，不分页，用于下拉选择",
+    response_model=ApiResponse[list[RoleInfo]],
+)
 async def role_all(
     db: Annotated[AsyncSession, Depends(get_db)],
     _: Annotated[
@@ -131,7 +161,12 @@ async def role_all(
     return success(data=result)
 
 
-@router.post("/associate-menus", response_model=ApiResponse[RoleInfo])
+@router.post(
+    "/associate-menus",
+    summary="关联角色菜单",
+    description="为角色分配或更新菜单权限",
+    response_model=ApiResponse[RoleInfo],
+)
 async def role_associate_menus(
     request: RoleAssociateMenusRequest,
     db: Annotated[AsyncSession, Depends(get_db)],

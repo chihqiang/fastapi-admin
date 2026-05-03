@@ -7,6 +7,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
+from src.core.config import settings
 from src.core.database import get_db
 from src.core.exception import AuthenticationException, PermissionException
 from src.models.auth import Account, Role
@@ -81,6 +82,9 @@ class AuthPermission:
         - api_url: API 路径，用于匹配菜单的 api_url 字段
         - api_method: API 请求方法，默认 "*" 表示任意方法
         """
+        # 自动补充 API 前缀
+        if api_url and not api_url.startswith(settings.API_V1_PREFIX):
+            api_url = settings.API_V1_PREFIX + api_url
         self.api_url: str | None = api_url
         self.api_method: str = api_method.upper()
 

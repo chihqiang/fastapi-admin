@@ -15,7 +15,7 @@ from src.modules.sys import route as sys_router
 
 def register_routers(app: FastAPI) -> None:
     """注册所有路由"""
-    prefix = settings.API_V1_STR
+    prefix = settings.API_V1_PREFIX
     logging.info(f"🛣️  注册路由 (prefix: {prefix})...")
 
     app.include_router(auth_router.router, prefix=prefix, tags=["auth"])
