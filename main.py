@@ -5,6 +5,7 @@ FastAPI Admin 应用程序入口
     python main.py run          # 启动开发服务器
     alembic upgrade head        # 执行数据库迁移
 """
+
 import logging
 
 import uvicorn

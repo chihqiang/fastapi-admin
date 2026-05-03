@@ -14,7 +14,7 @@ class Settings(BaseSettings):
     )
     PROJECT_NAME: str = "FastAPI Admin"
     API_V1_STR: str = "/api/v1"
-    
+
     # ================================================= #
     # ******************* 登录认证配置 ****************** #
     # ================================================= #
@@ -62,5 +62,6 @@ class Settings(BaseSettings):
     GZIP_ENABLE: bool = True  # 是否启用Gzip
     GZIP_MIN_SIZE: int = 1000  # 最小压缩大小(字节)
     GZIP_COMPRESS_LEVEL: int = 9  # 压缩级别(1-9)
+
 
 settings = Settings()

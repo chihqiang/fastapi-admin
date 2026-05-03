@@ -1,16 +1,12 @@
-from functools import lru_cache
-
-from fastapi import Depends, Request
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import joinedload
 
 from src.core.config import settings
-from src.core.database import get_db
-from src.core.exception import (APIException, AuthenticationException,
-                                PermissionException)
-from src.models.auth import Account, Role
-from src.modules.auth.schemas import LoginForm, RegisterForm
+from src.core.exception import APIException, AuthenticationException
+from src.models.auth import Account
+from src.modules.auth.schemas import (LoginForm, LoginOutSchema,
+                                      RefreshTokenOutSchema, RegisterForm,
+                                      RegisterOutSchema)
 
 # ==============================
 # 认证模块业务逻辑层：用户注册、登录认证
@@ -18,7 +14,9 @@ from src.modules.auth.schemas import LoginForm, RegisterForm
 # ==============================
 
 
-async def register_new_account(form: RegisterForm, db: AsyncSession) -> Account:
+async def register_new_account(
+    form: RegisterForm, db: AsyncSession
+) -> RegisterOutSchema:
     """
     用户注册新账户
 
@@ -32,7 +30,7 @@ async def register_new_account(form: RegisterForm, db: AsyncSession) -> Account:
         db: 异步数据库会话
 
     Returns:
-        Account: 注册成功的账户模型对象
+        RegisterOutSchema: 注册成功响应
 
     Raises:
         APIException: 邮箱已注册时抛出
@@ -53,10 +51,16 @@ async def register_new_account(form: RegisterForm, db: AsyncSession) -> Account:
     db.add(account)
     await db.commit()
 
-    return account
+    return RegisterOutSchema(
+        id=account.id,
+        name=account.name,
+        email=account.email,
+    )
 
 
-async def authenticate_account(form_data: LoginForm, db: AsyncSession):
+async def authenticate_account(
+    form_data: LoginForm, db: AsyncSession
+) -> LoginOutSchema:
     """
     用户登录认证
 
@@ -71,7 +75,7 @@ async def authenticate_account(form_data: LoginForm, db: AsyncSession):
         db: 异步数据库会话
 
     Returns:
-        dict: 登录成功响应数据，包含用户信息、token、过期时间等
+        LoginOutSchema: 登录成功响应
 
     Raises:
         APIException: 账户不存在或密码错误时抛出
@@ -93,19 +97,20 @@ async def authenticate_account(form_data: LoginForm, db: AsyncSession):
     access_token = account.create_access_token()
     refresh_token = account.create_refresh_token()
 
-    # 构造登录成功返回数据
-    return {
-        "id": account.id,
-        "name": account.name,
-        "email": account.email,
-        "access_token": access_token,
-        "refresh_token": refresh_token,
-        "token_type": "bearer",
-        "expires_in": settings.ACCESS_TOKEN_EXPIRE_MINUTES,
-    }
+    return LoginOutSchema(
+        id=account.id,
+        name=account.name,
+        email=account.email,
+        access_token=access_token,
+        refresh_token=refresh_token,
+        token_type="bearer",
+        expires_in=settings.ACCESS_TOKEN_EXPIRE_MINUTES,
+    )
 
 
-async def refresh_access_token(refresh_token: str, db: AsyncSession) -> dict[str, str]:
+async def refresh_access_token(
+    refresh_token: str, db: AsyncSession
+) -> RefreshTokenOutSchema:
     """
     使用刷新令牌获取新的访问令牌
 
@@ -144,157 +149,9 @@ async def refresh_access_token(refresh_token: str, db: AsyncSession) -> dict[str
     new_access_token = account.create_access_token()
     new_refresh_token = account.create_refresh_token()
 
-    return {
-        "access_token": new_access_token,
-        "refresh_token": new_refresh_token,
-        "token_type": "bearer",
-        "expires_in": settings.ACCESS_TOKEN_EXPIRE_MINUTES,
-    }
-
-
-@lru_cache(maxsize=128)
-async def get_current_account(
-    request: Request, db: AsyncSession = Depends(get_db)
-) -> Account:
-    """
-    获取当前登录用户（标准规范版）
-    自动从请求头 Authorization: Bearer <token> 获取token并校验
-
-    流程：
-        1. 从请求头获取token
-        2. 校验token是否有效
-        3. 解析出用户ID
-        4. 查询数据库返回用户
-    """
-    # 从请求头获取 token
-    authorization = request.headers.get("Authorization")
-    if not authorization:
-        raise AuthenticationException(msg="未提供身份凭证")
-
-    # 拆分 Bearer 和 token（捕获具体异常，修复 E722）
-    try:
-        token_type, token = authorization.split()
-        if token_type.lower() != "bearer":
-            raise AuthenticationException(msg="凭证类型错误")
-    except ValueError:
-        raise AuthenticationException(msg="凭证格式错误")
-
-    # 校验 token
-    payload = Account.verify_access_token(token)
-    if not payload:
-        raise AuthenticationException(msg="登录已过期，请重新登录")
-
-    # 获取用户ID
-    account_id = payload.get("id")
-    if not account_id:
-        raise AuthenticationException(msg="无效凭证")
-
-    # 查询用户，预加载角色和菜单数据
-    result = await db.execute(
-        select(Account)
-        .options(joinedload(Account.roles).joinedload(Role.menus))
-        .where(Account.id == account_id)
+    return RefreshTokenOutSchema(
+        access_token=new_access_token,
+        refresh_token=new_refresh_token,
+        token_type="bearer",
+        expires_in=settings.ACCESS_TOKEN_EXPIRE_MINUTES,
     )
-    account = result.scalars().unique().one_or_none()
-    if not account:
-        raise AuthenticationException(msg="账户不存在")
-    return account
-
-
-def _match_path_pattern(pattern: str, path: str) -> bool:
-    """
-    匹配路径模式
-
-    Args:
-        pattern: 路径模式
-        path: 实际路径
-
-    Returns:
-        bool: 是否匹配
-    """
-    return pattern.strip("/") == path.strip("/")
-
-
-def _match_method_pattern(menu_method: str, request_method: str) -> bool:
-    """
-    匹配请求方式
-
-    Args:
-        menu_method: 菜单配置的请求方式（GET/POST/PUT/DELETE/*）
-        request_method: 实际请求方式
-
-    Returns:
-        bool: 是否匹配
-    """
-    if menu_method == "*":
-        return True
-    return menu_method.upper() == request_method.upper()
-
-
-async def has_permission(
-    account: Account, request_path: str, request_method: str
-) -> bool:
-    """
-    检查用户是否有访问权限
-
-    业务逻辑：
-        1. 获取用户的所有角色
-        2. 获取所有角色关联的菜单
-        3. 检查请求路径是否匹配菜单的 api_url 模式
-        4. 检查请求方式是否匹配菜单的 api_method
-
-    Args:
-        account: 账户对象
-        request_path: 请求路径
-        request_method: 请求方式
-
-    Returns:
-        bool: 是否有权限
-    """
-    # 遍历所有角色的菜单
-    for role in account.roles:
-        for menu in role.menus:
-            if menu.api_url:
-                # 检查路径匹配
-                if _match_path_pattern(menu.api_url, request_path):
-                    # 检查请求方式匹配
-                    if _match_method_pattern(menu.api_method, request_method):
-                        return True
-
-    return False
-
-
-async def check_permission(request: Request, db: AsyncSession = Depends(get_db)):
-    """
-    权限检查依赖
-
-    业务逻辑：
-        1. 获取当前登录用户
-        2. 检查用户是否有权限访问请求路径和请求方式
-        3. 如果没有权限，抛出 PermissionException 异常
-
-    Args:
-        request: 请求对象
-        db: 异步数据库会话
-
-    Returns:
-        None
-
-    Raises:
-        PermissionException: 没有权限时抛出
-    """
-    # 获取当前登录用户
-    account = await get_current_account(request, db)
-
-    # 获取请求路径和请求方式
-    request_path = request.url.path
-    request_method = request.method
-
-    # 检查权限
-    permission_granted = await has_permission(account, request_path, request_method)
-
-    # 如果没有权限，抛出异常
-    if not permission_granted:
-        raise PermissionException()
-    # 有权限，继续处理请求
-    return None

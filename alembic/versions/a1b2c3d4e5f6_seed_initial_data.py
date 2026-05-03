@@ -5,15 +5,16 @@ Revises: c6c4b787c863
 Create Date: 2026-05-03 15:05:00.000000
 
 """
+
 from typing import Sequence, Union
 
-from alembic import op
 import bcrypt
 
+from alembic import op
 
 # revision identifiers, used by Alembic.
-revision: str = 'a1b2c3d4e5f6'
-down_revision: Union[str, Sequence[str], None] = 'c6c4b787c863'
+revision: str = "a1b2c3d4e5f6"
+down_revision: Union[str, Sequence[str], None] = "c6c4b787c863"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 

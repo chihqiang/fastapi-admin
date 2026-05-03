@@ -4,6 +4,8 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.core.database import get_db
+from src.core.dependencies import AuthPermission
+from src.models.auth import Account
 from src.modules.sys.role.schemas import (RoleAssociateMenusRequest,
                                           RoleCreate, RoleInfo,
                                           RoleListRequest, RoleListResponse,
@@ -21,6 +23,9 @@ router = APIRouter(prefix="/role", tags=["系统管理-角色管理"])
 async def role_list(
     request: Annotated[RoleListRequest, Depends()],
     db: Annotated[AsyncSession, Depends(get_db)],
+    _: Annotated[
+        Account, Depends(AuthPermission(api_url="/sys/role/list", api_method="GET"))
+    ],
 ):
     """
     获取角色列表
@@ -35,7 +40,13 @@ async def role_list(
 
 
 @router.get("/detail", response_model=ApiResponse[RoleInfo])
-async def role_detail(id: int, db: Annotated[AsyncSession, Depends(get_db)]):
+async def role_detail(
+    id: int,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    _: Annotated[
+        Account, Depends(AuthPermission(api_url="/sys/role/detail", api_method="GET"))
+    ],
+):
     """
     获取角色详情
 
@@ -47,7 +58,11 @@ async def role_detail(id: int, db: Annotated[AsyncSession, Depends(get_db)]):
 
 @router.post("/create", response_model=ApiResponse[RoleInfo])
 async def role_create(
-    role_data: RoleCreate, db: Annotated[AsyncSession, Depends(get_db)]
+    role_data: RoleCreate,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    _: Annotated[
+        Account, Depends(AuthPermission(api_url="/sys/role/create", api_method="POST"))
+    ],
 ):
     """
     创建角色
@@ -64,7 +79,11 @@ async def role_create(
 
 @router.put("/update", response_model=ApiResponse[RoleInfo])
 async def role_update(
-    role_data: RoleUpdate, db: Annotated[AsyncSession, Depends(get_db)]
+    role_data: RoleUpdate,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    _: Annotated[
+        Account, Depends(AuthPermission(api_url="/sys/role/update", api_method="PUT"))
+    ],
 ):
     """
     更新角色
@@ -81,7 +100,14 @@ async def role_update(
 
 
 @router.delete("/delete", response_model=ApiResponse[None])
-async def role_delete(id: int, db: Annotated[AsyncSession, Depends(get_db)]):
+async def role_delete(
+    id: int,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    _: Annotated[
+        Account,
+        Depends(AuthPermission(api_url="/sys/role/delete", api_method="DELETE")),
+    ],
+):
     """
     删除角色
 
@@ -92,7 +118,12 @@ async def role_delete(id: int, db: Annotated[AsyncSession, Depends(get_db)]):
 
 
 @router.get("/all", response_model=ApiResponse[list[RoleInfo]])
-async def role_all(db: Annotated[AsyncSession, Depends(get_db)]):
+async def role_all(
+    db: Annotated[AsyncSession, Depends(get_db)],
+    _: Annotated[
+        Account, Depends(AuthPermission(api_url="/sys/role/all", api_method="GET"))
+    ],
+):
     """
     获取所有角色列表
     """
@@ -102,7 +133,12 @@ async def role_all(db: Annotated[AsyncSession, Depends(get_db)]):
 
 @router.post("/associate-menus", response_model=ApiResponse[RoleInfo])
 async def role_associate_menus(
-    request: RoleAssociateMenusRequest, db: Annotated[AsyncSession, Depends(get_db)]
+    request: RoleAssociateMenusRequest,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    _: Annotated[
+        Account,
+        Depends(AuthPermission(api_url="/sys/role/associate-menus", api_method="POST")),
+    ],
 ):
     """
     关联角色和菜单

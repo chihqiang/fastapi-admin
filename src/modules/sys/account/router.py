@@ -4,8 +4,8 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.core.database import get_db
+from src.core.dependencies import AuthPermission
 from src.models.auth import Account
-from src.modules.auth.service import get_current_account
 from src.modules.sys.account.schemas import (AccountCreate, AccountInfo,
                                              AccountListRequest,
                                              AccountListResponse,
@@ -22,6 +22,9 @@ router = APIRouter(prefix="/account", tags=["系统管理-账号管理"])
 async def account_list(
     request: Annotated[AccountListRequest, Depends()],
     db: Annotated[AsyncSession, Depends(get_db)],
+    _: Annotated[
+        Account, Depends(AuthPermission(api_url="/sys/account/list", api_method="GET"))
+    ],
 ):
     """
     获取账号列表
@@ -35,7 +38,14 @@ async def account_list(
 
 
 @router.get("/detail", response_model=ApiResponse[AccountInfo])
-async def account_detail(id: int, db: Annotated[AsyncSession, Depends(get_db)]):
+async def account_detail(
+    id: int,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    _: Annotated[
+        Account,
+        Depends(AuthPermission(api_url="/sys/account/detail", api_method="GET")),
+    ],
+):
     """
     获取账号详情
 
@@ -47,7 +57,12 @@ async def account_detail(id: int, db: Annotated[AsyncSession, Depends(get_db)]):
 
 @router.post("/create", response_model=ApiResponse[AccountInfo])
 async def account_create(
-    account_data: AccountCreate, db: Annotated[AsyncSession, Depends(get_db)]
+    account_data: AccountCreate,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    _: Annotated[
+        Account,
+        Depends(AuthPermission(api_url="/sys/account/create", api_method="POST")),
+    ],
 ):
     """
     创建账号
@@ -64,7 +79,12 @@ async def account_create(
 
 @router.put("/update", response_model=ApiResponse[AccountInfo])
 async def account_update(
-    account_data: AccountUpdate, db: Annotated[AsyncSession, Depends(get_db)]
+    account_data: AccountUpdate,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    _: Annotated[
+        Account,
+        Depends(AuthPermission(api_url="/sys/account/update", api_method="PUT")),
+    ],
 ):
     """
     更新账号
@@ -84,12 +104,15 @@ async def account_update(
 async def account_delete(
     id: int,
     db: Annotated[AsyncSession, Depends(get_db)],
-    current_account: Annotated[Account, Depends(get_current_account)],
+    _: Annotated[
+        Account,
+        Depends(AuthPermission(api_url="/sys/account/delete", api_method="DELETE")),
+    ],
 ):
     """
     删除账号
 
     - **id**: 账号ID
     """
-    await delete_account(id, db, current_account)
+    await delete_account(id, db)
     return success(msg="删除成功")

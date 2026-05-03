@@ -4,6 +4,8 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.core.database import get_db
+from src.core.dependencies import AuthPermission
+from src.models.auth import Account
 from src.modules.sys.menu.schemas import (MenuCreate, MenuInfo,
                                           MenuListRequest, MenuListResponse,
                                           MenuUpdate)
@@ -19,6 +21,9 @@ router = APIRouter(prefix="/menu", tags=["系统管理-菜单管理"])
 async def menu_list(
     request: Annotated[MenuListRequest, Depends()],
     db: Annotated[AsyncSession, Depends(get_db)],
+    _: Annotated[
+        Account, Depends(AuthPermission(api_url="/sys/menu/list", api_method="GET"))
+    ],
 ):
     """
     获取菜单列表
@@ -34,7 +39,12 @@ async def menu_list(
 
 
 @router.get("/all", response_model=ApiResponse[list[MenuInfo]])
-async def menu_all(db: Annotated[AsyncSession, Depends(get_db)]):
+async def menu_all(
+    db: Annotated[AsyncSession, Depends(get_db)],
+    _: Annotated[
+        Account, Depends(AuthPermission(api_url="/sys/menu/all", api_method="GET"))
+    ],
+):
     """
     获取所有菜单列表（用于下拉选择）
     """
@@ -43,7 +53,13 @@ async def menu_all(db: Annotated[AsyncSession, Depends(get_db)]):
 
 
 @router.get("/detail", response_model=ApiResponse[MenuInfo])
-async def menu_detail(id: int, db: Annotated[AsyncSession, Depends(get_db)]):
+async def menu_detail(
+    id: int,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    _: Annotated[
+        Account, Depends(AuthPermission(api_url="/sys/menu/detail", api_method="GET"))
+    ],
+):
     """
     获取菜单详情
 
@@ -55,7 +71,11 @@ async def menu_detail(id: int, db: Annotated[AsyncSession, Depends(get_db)]):
 
 @router.post("/create", response_model=ApiResponse[MenuInfo])
 async def menu_create(
-    menu_data: MenuCreate, db: Annotated[AsyncSession, Depends(get_db)]
+    menu_data: MenuCreate,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    _: Annotated[
+        Account, Depends(AuthPermission(api_url="/sys/menu/create", api_method="POST"))
+    ],
 ):
     """
     创建菜单
@@ -79,7 +99,11 @@ async def menu_create(
 
 @router.put("/update", response_model=ApiResponse[MenuInfo])
 async def menu_update(
-    menu_data: MenuUpdate, db: Annotated[AsyncSession, Depends(get_db)]
+    menu_data: MenuUpdate,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    _: Annotated[
+        Account, Depends(AuthPermission(api_url="/sys/menu/update", api_method="PUT"))
+    ],
 ):
     """
     更新菜单
@@ -103,7 +127,14 @@ async def menu_update(
 
 
 @router.delete("/delete", response_model=ApiResponse[None])
-async def menu_delete(id: int, db: Annotated[AsyncSession, Depends(get_db)]):
+async def menu_delete(
+    id: int,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    _: Annotated[
+        Account,
+        Depends(AuthPermission(api_url="/sys/menu/delete", api_method="DELETE")),
+    ],
+):
     """
     删除菜单
 
