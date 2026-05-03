@@ -8,7 +8,7 @@ from src.core.config import settings
 
 # 创建异步数据库引擎
 engine = create_async_engine(
-    url=settings.DATABASE_URL,
+    url=settings.ASYNC_DB_URI,
     echo=settings.DATABASE_ECHO,
     echo_pool=settings.ECHO_POOL,
     pool_pre_ping=settings.POOL_PRE_PING,

@@ -17,7 +17,7 @@ target_metadata = get_models_metadata()
 config = context.config
 
 # 从环境变量或配置中获取数据库 URL
-config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
+config.set_main_option("sqlalchemy.url", settings.ASYNC_DB_URI)
 
 # 同步日志配置
 if config.config_file_name is not None:

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 from typing import ClassVar, Literal
+from urllib.parse import quote_plus
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -14,6 +15,18 @@ class Settings(BaseSettings):
     )
     PROJECT_NAME: str = "FastAPI Admin"
     API_V1_PREFIX: str = "/api/v1"
+    # ================================================= #
+    # ******************* 服务器配置 ****************** #
+    # ================================================= #
+    SERVER_HOST: str = "0.0.0.0"  # 允许访问的IP地址
+    SERVER_PORT: int = 8000  # 服务端口
+
+    # ================================================= #
+    # ******************** 日志配置 ******************** #
+    # ================================================= #
+    LOG_LEVEL: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = "INFO"
+    LOG_FORMAT: Literal["json", "console", "text"] = "console"  # json/console/text
+    LOG_FILE: str | None = None  # 日志文件路径，为None时不写入文件
 
     # ================================================= #
     # ******************* 登录认证配置 ****************** #
@@ -22,28 +35,15 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
-
-    # ================================================= #
-    # ******************* 服务器配置 ****************** #
-    # ================================================= #
-    SERVER_HOST: str = "0.0.0.0"  # 允许访问的IP地址
-    SERVER_PORT: int = 8000  # 服务端口
-
-    # ================================================= #
-    # ******************** 跨域配置 ******************** #
-    # ================================================= #
-    CORS_ORIGIN_ENABLE: bool = True  # 是否启用跨域
-    ALLOW_ORIGINS: list[str] = ["*"]  # 允许的域名列表
-    ALLOW_METHODS: list[str] = ["*"]  # 允许的HTTP方法
-    ALLOW_HEADERS: list[str] = ["*"]  # 允许的请求头
-    ALLOW_CREDENTIALS: bool = True  # 是否允许携带cookie
-    CORS_EXPOSE_HEADERS: list[str] = ["X-Request-ID"]
     # ================================================= #
     # ******************** 数据库配置 ******************* #
     # ================================================= #
-    DATABASE_URL: str = (
-        f"sqlite+aiosqlite:///{os.path.join(ROOT_PATH, 'storage', 'fastapi.db')}"
-    )
+    DATABASE_TYPE: Literal["mysql", "postgres", "sqlite"] = "sqlite"
+    DATABASE_HOST: str = "localhost"
+    DATABASE_PORT: int = 3306
+    DATABASE_USER: str = "root"
+    DATABASE_PASSWORD: str = "123456"
+    DATABASE_NAME: str = "fastapi"
     DATABASE_ECHO: bool | Literal["debug"] = False  # 是否显示SQL日志
     ECHO_POOL: bool | Literal["debug"] = False  # 是否显示连接池日志
     POOL_SIZE: int = 10  # 连接池大小
@@ -57,11 +57,58 @@ class Settings(BaseSettings):
     AUTOFETCH: bool = False  # 是否自动刷新
     EXPIRE_ON_COMMIT: bool = False  # 是否在提交时过期
     # ================================================= #
+    # ******************** 跨域配置 ******************** #
+    # ================================================= #
+    CORS_ORIGIN_ENABLE: bool = True  # 是否启用跨域
+    ALLOW_ORIGINS: list[str] = ["*"]  # 允许的域名列表
+    ALLOW_METHODS: list[str] = ["*"]  # 允许的HTTP方法
+    ALLOW_HEADERS: list[str] = ["*"]  # 允许的请求头
+    ALLOW_CREDENTIALS: bool = True  # 是否允许携带cookie
+    CORS_EXPOSE_HEADERS: list[str] = ["X-Request-ID"]
+
+    # ================================================= #
     # ******************* Gzip压缩配置 ******************* #
     # ================================================= #
     GZIP_ENABLE: bool = True  # 是否启用Gzip
     GZIP_MIN_SIZE: int = 1000  # 最小压缩大小(字节)
     GZIP_COMPRESS_LEVEL: int = 9  # 压缩级别(1-9)
+
+    @property
+    def ASYNC_DB_URI(self):
+        if self.DATABASE_TYPE not in ("mysql", "postgres", "sqlite"):
+            raise ValueError(
+                f"数据库驱动不支持: {self.DATABASE_TYPE}, 异步数据库请选择 mysql、postgres、sqlite"
+            )
+        if self.DATABASE_TYPE == "mysql":
+            db_connect = f"mysql+asyncmy://{self.DATABASE_USER}:{quote_plus(self.DATABASE_PASSWORD)}@{self.DATABASE_HOST}:{self.DATABASE_PORT}/{self.DATABASE_NAME}?charset=utf8mb4"
+        elif self.DATABASE_TYPE == "postgres":
+            db_connect = f"postgresql+asyncpg://{self.DATABASE_USER}:{quote_plus(self.DATABASE_PASSWORD)}@{self.DATABASE_HOST}:{self.DATABASE_PORT}/{self.DATABASE_NAME}"
+        else:
+            db_connect = f"sqlite+aiosqlite:///{self.DATABASE_NAME}.db"
+        return db_connect
+
+    @property
+    def DB_URI(self) -> str:
+        """
+        同步 SQLAlchemy 数据库 URL。
+
+        返回:
+        - str: 同步驱动连接串。
+
+        异常:
+        - ValueError: 数据库类型不支持时抛出。
+        """
+        if self.DATABASE_TYPE not in ("mysql", "postgres", "sqlite"):
+            raise ValueError(
+                f"数据库驱动不支持: {self.DATABASE_TYPE}, 同步数据库请选择 mysql、postgres、sqlite"
+            )
+        if self.DATABASE_TYPE == "mysql":
+            db_connect = f"mysql+pymysql://{self.DATABASE_USER}:{quote_plus(self.DATABASE_PASSWORD)}@{self.DATABASE_HOST}:{self.DATABASE_PORT}/{self.DATABASE_NAME}?charset=utf8mb4"
+        elif self.DATABASE_TYPE == "postgres":
+            db_connect = f"postgresql+psycopg://{self.DATABASE_USER}:{quote_plus(self.DATABASE_PASSWORD)}@{self.DATABASE_HOST}:{self.DATABASE_PORT}/{self.DATABASE_NAME}"
+        else:
+            db_connect = f"sqlite:///{self.DATABASE_NAME}.db"
+        return db_connect
 
 
 settings = Settings()
