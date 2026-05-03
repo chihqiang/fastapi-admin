@@ -14,9 +14,10 @@ class Settings(BaseSettings):
     )
     PROJECT_NAME: str = "FastAPI Admin"
     API_V1_STR: str = "/api/v1"
-    DATABASE_URL: str = (
-        f"sqlite+aiosqlite:///{os.path.join(ROOT_PATH, 'storage', 'fastapi.db')}"
-    )
+    
+    # ================================================= #
+    # ******************* 登录认证配置 ****************** #
+    # ================================================= #
     SECRET_KEY: str = "9d33c5e5c93ffed4bbf296f902253535b2058adc9322fb810545473b3e2b5366"
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
@@ -40,6 +41,9 @@ class Settings(BaseSettings):
     # ================================================= #
     # ******************** 数据库配置 ******************* #
     # ================================================= #
+    DATABASE_URL: str = (
+        f"sqlite+aiosqlite:///{os.path.join(ROOT_PATH, 'storage', 'fastapi.db')}"
+    )
     DATABASE_ECHO: bool | Literal["debug"] = False  # 是否显示SQL日志
     ECHO_POOL: bool | Literal["debug"] = False  # 是否显示连接池日志
     POOL_SIZE: int = 10  # 连接池大小
