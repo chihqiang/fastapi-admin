@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import os
-from typing import ClassVar
+from typing import ClassVar, Literal
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -37,6 +37,21 @@ class Settings(BaseSettings):
     ALLOW_HEADERS: list[str] = ["*"]  # 允许的请求头
     ALLOW_CREDENTIALS: bool = True  # 是否允许携带cookie
     CORS_EXPOSE_HEADERS: list[str] = ["X-Request-ID"]
+    # ================================================= #
+    # ******************** 数据库配置 ******************* #
+    # ================================================= #
+    DATABASE_ECHO: bool | Literal["debug"] = False  # 是否显示SQL日志
+    ECHO_POOL: bool | Literal["debug"] = False  # 是否显示连接池日志
+    POOL_SIZE: int = 10  # 连接池大小
+    MAX_OVERFLOW: int = 20  # 最大溢出连接数
+    POOL_TIMEOUT: int = 30  # 连接超时时间(秒)
+    POOL_RECYCLE: int = 1800  # 连接回收时间(秒)
+    POOL_USE_LIFO: bool = True  # 是否使用LIFO连接池
+    POOL_PRE_PING: bool = True  # 是否开启连接预检
+    FUTURE: bool = True  # 是否使用SQLAlchemy 2.0特性
+    AUTOCOMMIT: bool = False  # 是否自动提交
+    AUTOFETCH: bool = False  # 是否自动刷新
+    EXPIRE_ON_COMMIT: bool = False  # 是否在提交时过期
 
 
 settings = Settings()

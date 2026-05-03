@@ -40,10 +40,17 @@ A lightweight admin dashboard built with FastAPI and SQLAlchemy, featuring role-
    - 默认使用 SQLite 数据库，无需额外配置
    - 如需使用其他数据库，请修改 `src/core/config.py` 中的数据库连接字符串
 
-4. **初始化数据**
+4. **数据库迁移**
 
    ```bash
-   PYTHONPATH=. python tools/migrate.py
+   # 执行所有迁移
+   alembic upgrade head
+
+   # 查看当前版本
+   alembic current
+
+   # 查看迁移历史
+   alembic history
    ```
 
 ## 快速开始
@@ -91,8 +98,6 @@ fastapi-admin/
 │   │   ├── pagination.py # 通用分页 Schema
 │   │   └── response.py  # 统一响应 Schema
 │   └── __init__.py
-├── tools/
-│   └── migrate.py       # 数据库迁移和初始化
 ├── storage/             # 存储目录
 ├── api.http             # API 测试文件
 ├── main.py              # 应用入口
@@ -713,6 +718,53 @@ stmt = select(Account).options(joinedload(Account.roles))
 1. 安装 REST Client 插件
 2. 打开 `api.http` 文件
 3. 点击请求上方的 "Send Request" 链接
+
+## 数据库迁移 (Alembic)
+
+本项目使用 [Alembic](https://alembic.sqlalchemy.org/) 进行数据库版本管理。
+
+### 常用命令
+
+```bash
+# 查看所有迁移
+alembic history
+
+# 查看当前版本
+alembic current
+
+# 升级到最新版本
+alembic upgrade head
+
+# 回滚上一个版本
+alembic downgrade -1
+
+# 回滚到指定版本
+alembic downgrade <revision>
+
+# 创建新迁移（空迁移）
+alembic revision -m "add new table"
+
+# 创建新迁移（自动检测模型变更）
+alembic revision --automerge -m "update table"
+
+# 检查迁移脚本是否有问题
+alembic check
+
+# 查看指定版本的详细信息
+alembic show <revision>
+```
+
+### 迁移工作流程
+
+1. **修改模型**：在 `src/models/` 下修改或新增数据模型
+2. **生成迁移**：运行 `alembic revision --automerate -m "描述"`
+3. **检查迁移**：运行 `alembic check` 确认无误
+4. **执行迁移**：运行 `alembic upgrade head` 应用更改
+5. **如需回滚**：运行 `alembic downgrade -1` 回滚上一个版本
+
+### 迁移文件位置
+
+迁移文件位于 `alembic/versions/` 目录下，每个迁移文件都有唯一的版本 ID。
 
 ## 注意事项
 

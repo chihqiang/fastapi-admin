@@ -8,18 +8,25 @@ from src.core.config import settings
 
 # 创建异步数据库引擎
 engine = create_async_engine(
-    # 数据库连接URL，从配置文件读取
-    settings.DATABASE_URL,
-    # 是否打印执行的SQL语句，生产环境关闭
-    echo=False,
-    # 启用SQLAlchemy 2.0 新特性
-    future=True,
-    # 连接前检查有效性，防止连接失效
-    pool_pre_ping=True,
-    # 连接5分钟后自动回收，避免数据库超时
-    pool_recycle=300,
+    url=settings.DATABASE_URL,
+    echo=settings.DATABASE_ECHO,
+    echo_pool=settings.ECHO_POOL,
+    pool_pre_ping=settings.POOL_PRE_PING,
+    future=settings.FUTURE,
+    pool_recycle=settings.POOL_RECYCLE,
 )
-
+# engine = create_async_engine(
+#     url=settings.DATABASE_URL,
+#     echo=settings.DATABASE_ECHO,
+#     echo_pool=settings.ECHO_POOL,
+#     pool_pre_ping=settings.POOL_PRE_PING,
+#     future=settings.FUTURE,
+#     pool_recycle=settings.POOL_RECYCLE,
+#     pool_size=settings.POOL_SIZE,
+#     max_overflow=settings.MAX_OVERFLOW,
+#     pool_timeout=settings.POOL_TIMEOUT,
+#     pool_use_lifo=settings.POOL_USE_LIFO,
+# )
 # 创建异步会话工厂，用于生成数据库会话
 AsyncSessionLocal = async_sessionmaker(
     # 绑定数据库引擎
@@ -47,3 +54,13 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
         finally:
             # 请求结束后自动关闭会话
             await session.close()
+
+
+async def create_tables():
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+
+
+async def drop_tables() -> None:
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)

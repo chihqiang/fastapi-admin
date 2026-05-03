@@ -12,6 +12,8 @@ from fastapi import FastAPI
 from src.boot.exception import register_exception
 from src.boot.middleware import register_middlewares
 from src.boot.route import register_routers
+
+__all__ = ["create_app"]
 from src.core.config import settings
 
 
