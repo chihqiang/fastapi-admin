@@ -1,48 +1,48 @@
+"""
+FastAPI Admin 应用程序入口
+
+用法:
+    python main.py run          # 启动开发服务器
+"""
+
 import logging
-from contextlib import asynccontextmanager
 
+import typer
 import uvicorn
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
 
+from src import boot
 from src.core.config import settings
-from src.core.exception import register_exception
 from src.core.logger import setup_logging
-from src.modules.auth import router as auth_router
-from src.modules.sys import route as sys_router
-from src.schemas.response import success
+
+app = boot.create_app()
+cli = typer.Typer()
+setup_logging()
 
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    setup_logging()
-    logging.info("Starting up...")
-    yield
-    # Shutdown logic
-    logging.info("Shutting down...")
-
-
-app = FastAPI(title=settings.PROJECT_NAME, lifespan=lifespan)
-app.include_router(auth_router.router, prefix=f"{settings.API_V1_STR}", tags=["auth"])
-app.include_router(sys_router.router, prefix=f"{settings.API_V1_STR}")
-
-# 允许所有来源的请求
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+@cli.command(
+    name="run",
+    help="启动 FastAPI 开发服务器",
 )
+def run() -> None:
+    """启动 FastAPI 开发服务器"""
+    logging.info("=" * 50)
+    logging.info(f"项目名称: {settings.PROJECT_NAME}")
+    logging.info(f"服务器地址: http://{settings.SERVER_HOST}:{settings.SERVER_PORT}")
+    logging.info("=" * 50)
 
-# 注册异常处理器
-register_exception(app)
-
-
-@app.get("/health")
-async def health_check():
-    return success(msg="ok")
+    try:
+        uvicorn.run(
+            app="main:app",
+            host=settings.SERVER_HOST,
+            port=settings.SERVER_PORT,
+            factory=False,
+            log_config=None,
+        )
+    except KeyboardInterrupt:
+        logging.info("收到键盘中断信号，正在关闭服务器...")
+    finally:
+        logging.info("服务器已停止运行")
 
 
 if __name__ == "__main__":
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+    cli()
