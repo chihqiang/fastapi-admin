@@ -27,7 +27,6 @@ class Settings(BaseSettings):
     LOG_LEVEL: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = "INFO"
     LOG_FORMAT: Literal["json", "console", "text"] = "console"  # json/console/text
     LOG_FILE: str | None = None  # 日志文件路径，为None时不写入文件
-
     # ================================================= #
     # ******************* 登录认证配置 ****************** #
     # ================================================= #
@@ -85,29 +84,6 @@ class Settings(BaseSettings):
             db_connect = f"postgresql+asyncpg://{self.DATABASE_USER}:{quote_plus(self.DATABASE_PASSWORD)}@{self.DATABASE_HOST}:{self.DATABASE_PORT}/{self.DATABASE_NAME}"
         else:
             db_connect = f"sqlite+aiosqlite:///{self.DATABASE_NAME}.db"
-        return db_connect
-
-    @property
-    def DB_URI(self) -> str:
-        """
-        同步 SQLAlchemy 数据库 URL。
-
-        返回:
-        - str: 同步驱动连接串。
-
-        异常:
-        - ValueError: 数据库类型不支持时抛出。
-        """
-        if self.DATABASE_TYPE not in ("mysql", "postgres", "sqlite"):
-            raise ValueError(
-                f"数据库驱动不支持: {self.DATABASE_TYPE}, 同步数据库请选择 mysql、postgres、sqlite"
-            )
-        if self.DATABASE_TYPE == "mysql":
-            db_connect = f"mysql+pymysql://{self.DATABASE_USER}:{quote_plus(self.DATABASE_PASSWORD)}@{self.DATABASE_HOST}:{self.DATABASE_PORT}/{self.DATABASE_NAME}?charset=utf8mb4"
-        elif self.DATABASE_TYPE == "postgres":
-            db_connect = f"postgresql+psycopg://{self.DATABASE_USER}:{quote_plus(self.DATABASE_PASSWORD)}@{self.DATABASE_HOST}:{self.DATABASE_PORT}/{self.DATABASE_NAME}"
-        else:
-            db_connect = f"sqlite:///{self.DATABASE_NAME}.db"
         return db_connect
 
 

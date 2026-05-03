@@ -60,6 +60,8 @@ async def get_current_account(
     account = result.scalars().unique().one_or_none()
     if not account:
         raise AuthenticationException(msg="账户不存在")
+    request.state.account_id = account.id
+    request.state.account_name = account.name
     return account
 
 
