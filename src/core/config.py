@@ -52,6 +52,11 @@ class Settings(BaseSettings):
     AUTOCOMMIT: bool = False  # 是否自动提交
     AUTOFETCH: bool = False  # 是否自动刷新
     EXPIRE_ON_COMMIT: bool = False  # 是否在提交时过期
-
+    # ================================================= #
+    # ******************* Gzip压缩配置 ******************* #
+    # ================================================= #
+    GZIP_ENABLE: bool = True  # 是否启用Gzip
+    GZIP_MIN_SIZE: int = 1000  # 最小压缩大小(字节)
+    GZIP_COMPRESS_LEVEL: int = 9  # 压缩级别(1-9)
 
 settings = Settings()
