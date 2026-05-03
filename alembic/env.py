@@ -8,11 +8,10 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 
 # 导入项目配置和模型基类
 from src.core.config import settings
-from src.core.database import Base
-from src.utils.import_util import import_models
+from src.utils.import_util import get_models_metadata
 
-# 自动扫描加载所有模型
-import_models()
+# 自动扫描加载所有模型并获取 metadata
+target_metadata = get_models_metadata()
 
 # this is the Alembic Config object
 config = context.config
@@ -23,9 +22,6 @@ config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
 # 同步日志配置
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
-
-# 用于 autogenerate 的元数据
-target_metadata = Base.metadata
 
 
 def run_migrations_offline() -> None:
