@@ -17,7 +17,7 @@ from src.modules.auth.schemas import (LoginForm, LoginOutSchema, MenuInfo,
                                       ProfileOutSchema, RefreshTokenOutSchema,
                                       RegisterForm, RegisterOutSchema,
                                       RoleInfo)
-from src.utils.hashs import Token, pwd
+from src.utils.hashs import Token, TokenType, pwd
 
 
 class AuthService:
@@ -89,10 +89,10 @@ class AuthService:
         if not payload:
             raise AuthenticationException(msg="刷新令牌已过期，请重新登录")
 
-        if payload.get("type") != "refresh":
+        if payload.type != TokenType.REFRESH:
             raise AuthenticationException(msg="无效的刷新令牌")
 
-        account_id = payload.get("id")
+        account_id = payload.id
         if not account_id:
             raise AuthenticationException(msg="无效凭证")
 

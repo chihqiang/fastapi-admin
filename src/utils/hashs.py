@@ -18,20 +18,13 @@
     payload = token_handler.verify_token(access_token)
 """
 
+from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
-from typing import TypedDict, cast
+from enum import Enum
+from typing import cast
 
 import bcrypt
 from jose import JWTError, jwt
-
-
-class TokenPayload(TypedDict):
-    """JWT Token Payload 类型定义"""
-
-    id: int
-    email: str
-    exp: datetime
-    type: str
 
 
 class pwd:
@@ -85,6 +78,23 @@ class pwd:
             return bcrypt.checkpw(plain_password.encode("utf-8"), password_bytes)
         except (ValueError, AttributeError):
             return False
+
+
+class TokenType(str, Enum):
+    """JWT Token 类型枚举"""
+
+    ACCESS = "access"
+    REFRESH = "refresh"
+
+
+@dataclass
+class TokenPayload:
+    """JWT Token Payload 数据类"""
+
+    id: int
+    email: str
+    exp: datetime
+    type: TokenType
 
 
 class Token:
@@ -158,7 +168,7 @@ class Token:
             "id": id,
             "email": email,
             "exp": expire,
-            "type": "access",
+            "type": TokenType.ACCESS.value,
         }
         return jwt.encode(to_encode, self.secret_key, algorithm=self.algorithm)
 
@@ -185,7 +195,7 @@ class Token:
             "id": id,
             "email": email,
             "exp": expire,
-            "type": "refresh",
+            "type": TokenType.REFRESH.value,
         }
         return jwt.encode(to_encode, self.secret_key, algorithm=self.algorithm)
 
@@ -204,11 +214,16 @@ class Token:
         Example:
             payload = token_handler.verify_token(access_token)
             if payload:
-                user_id = payload.get("id")
-                token_type = payload.get("type")
+                user_id = payload.id
+                token_type = payload.type
         """
         try:
-            payload = jwt.decode(token, self.secret_key, algorithms=[self.algorithm])
-            return cast(TokenPayload, cast(object, payload))
+            data = jwt.decode(token, self.secret_key, algorithms=[self.algorithm])  # type: ignore[var-annotated]
+            return TokenPayload(
+                id=cast(int, data["id"]),
+                email=cast(str, data["email"]),
+                exp=datetime.fromtimestamp(cast(int, data["exp"]), tz=timezone.utc),
+                type=TokenType(cast(str, data["type"])),
+            )
         except JWTError:
             return None
