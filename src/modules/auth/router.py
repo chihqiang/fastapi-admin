@@ -1,3 +1,11 @@
+"""
+认证模块路由
+
+职责：
+- 用户注册、登录、Token 管理
+- 获取用户资料和权限菜单
+"""
+
 from typing import Annotated
 
 from fastapi import APIRouter, Depends
@@ -6,13 +14,16 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.core.database import get_db
 from src.core.dependencies import get_current_account
 from src.models.auth import Account
-from src.modules.auth.schemas import (LoginForm, LoginOutSchema, MenuInfo,
-                                      ProfileOutSchema, RefreshTokenForm,
-                                      RefreshTokenOutSchema, RegisterForm,
-                                      RegisterOutSchema, RoleInfo)
-from src.modules.auth.service import (authenticate_account,
-                                      refresh_access_token,
-                                      register_new_account)
+from src.modules.auth.schemas import (
+    LoginForm,
+    LoginOutSchema,
+    ProfileOutSchema,
+    RefreshTokenForm,
+    RefreshTokenOutSchema,
+    RegisterForm,
+    RegisterOutSchema,
+)
+from src.modules.auth.service import AuthService
 from src.schemas.response import ApiResponse, success
 
 router = APIRouter(prefix="/auth", tags=["认证模块"])
@@ -27,7 +38,9 @@ router = APIRouter(prefix="/auth", tags=["认证模块"])
 async def register(
     form: RegisterForm, db: Annotated[AsyncSession, Depends(get_db)]
 ) -> ApiResponse[RegisterOutSchema]:
-    data = await register_new_account(form, db)
+    """用户注册"""
+    service = AuthService(db)
+    data = await service.register(form)
     return success(msg="注册成功", data=data)
 
 
@@ -40,7 +53,9 @@ async def register(
 async def login(
     login_form: LoginForm, db: Annotated[AsyncSession, Depends(get_db)]
 ) -> ApiResponse[LoginOutSchema]:
-    data = await authenticate_account(login_form, db)
+    """用户登录"""
+    service = AuthService(db)
+    data = await service.login(login_form)
     return success(msg="登录成功", data=data)
 
 
@@ -53,7 +68,9 @@ async def login(
 async def refresh_token(
     form: RefreshTokenForm, db: Annotated[AsyncSession, Depends(get_db)]
 ) -> ApiResponse[RefreshTokenOutSchema]:
-    data = await refresh_access_token(form.refresh_token, db)
+    """刷新令牌"""
+    service = AuthService(db)
+    data = await service.refresh_token(form.refresh_token)
     return success(msg="刷新成功", data=data)
 
 
@@ -65,26 +82,9 @@ async def refresh_token(
 )
 async def user_profile(
     current_account: Annotated[Account, Depends(get_current_account)],
+    db: Annotated[AsyncSession, Depends(get_db)],
 ) -> ApiResponse[ProfileOutSchema]:
-    account = current_account
-
-    # 构建角色信息列表
-    roles = [RoleInfo.model_validate(role) for role in account.roles]
-
-    # 收集所有菜单并去重
-    menu_dict: dict[int, MenuInfo] = {}
-    for role in account.roles:
-        for menu in role.menus:
-            if menu.id not in menu_dict:
-                menu_dict[menu.id] = MenuInfo.model_validate(menu)
-
-    return success(
-        msg="获取个人信息成功",
-        data=ProfileOutSchema(
-            id=account.id,
-            name=account.name,
-            email=account.email,
-            roles=roles,
-            menus=list(menu_dict.values()),
-        ),
-    )
+    """获取用户资料"""
+    service = AuthService(db)
+    data = await service.get_profile(current_account)
+    return success(msg="获取个人信息成功", data=data)
