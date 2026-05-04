@@ -9,7 +9,7 @@ Create Date: 2026-05-03 14:36:20.990325
 from typing import Sequence, Union
 
 from alembic import op
-from src.utils.import_util import get_models_metadata
+from src.utils.imports import get_models_metadata
 
 # revision identifiers, used by Alembic.
 revision: str = "c6c4b787c863"

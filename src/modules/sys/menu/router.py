@@ -14,13 +14,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.core.database import get_db
 from src.core.dependencies import AuthPermission
 from src.models.auth import Account
-from src.modules.sys.menu.schemas import (
-    MenuCreate,
-    MenuInfo,
-    MenuListRequest,
-    MenuListResponse,
-    MenuUpdate,
-)
+from src.modules.sys.menu.schemas import (MenuCreate, MenuInfo,
+                                          MenuListRequest, MenuListResponse,
+                                          MenuUpdate)
 from src.modules.sys.menu.service import MenuService
 from src.schemas.response import ApiResponse, success
 

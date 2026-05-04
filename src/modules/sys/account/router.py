@@ -14,13 +14,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.core.database import get_db
 from src.core.dependencies import AuthPermission, get_current_account
 from src.models.auth import Account
-from src.modules.sys.account.schemas import (
-    AccountCreate,
-    AccountInfo,
-    AccountListRequest,
-    AccountListResponse,
-    AccountUpdate,
-)
+from src.modules.sys.account.schemas import (AccountCreate, AccountInfo,
+                                             AccountListRequest,
+                                             AccountListResponse,
+                                             AccountUpdate)
 from src.modules.sys.account.service import AccountService
 from src.schemas.response import ApiResponse, success
 
@@ -90,9 +87,7 @@ async def account_update(
 async def account_delete(
     id: int,
     db: Annotated[AsyncSession, Depends(get_db)],
-    current_account: Annotated[
-        Account, Depends(get_current_account)
-    ] = None,
+    current_account: Annotated[Account, Depends(get_current_account)] = None,
     _: Annotated[
         Account,
         Depends(AuthPermission(api_url="/sys/account/delete", api_method="DELETE")),

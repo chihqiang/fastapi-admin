@@ -1,12 +1,8 @@
-from datetime import datetime, timedelta, timezone
 from typing import List
 
-import bcrypt
-from jose import JWTError, jwt
 from sqlalchemy import Column, ForeignKey, Index, Integer, String, Table
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from src.core.config import settings
 from src.core.database import Base
 
 # 角色-菜单 多对多关联表
@@ -142,55 +138,3 @@ class Account(Base):
     roles: Mapped[list["Role"]] = relationship(
         secondary=account_roles, back_populates="accounts"
     )
-
-    def set_password(self, password: str) -> None:
-        """密码加密：将明文密码转换为哈希密码"""
-        pwd_bytes = password.encode("utf-8")
-        salt = bcrypt.gensalt()
-        hashed = bcrypt.hashpw(pwd_bytes, salt)
-        setattr(self, "password", hashed.decode("utf-8"))
-
-    def verify_password(self, plain_password: str) -> bool:
-        """密码验证：对比明文密码与数据库哈希密码是否一致"""
-        try:
-            hashed_password = self.password.encode("utf-8")
-            return bcrypt.checkpw(plain_password.encode("utf-8"), hashed_password)
-        except (ValueError, AttributeError):
-            return False
-
-    def create_access_token(self, expires_delta: timedelta | None = None) -> str:
-        """创建JWT访问令牌"""
-        expire = datetime.now(timezone.utc) + (
-            expires_delta or timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-        )
-        to_encode = {
-            "id": self.id,
-            "email": self.email,
-            "exp": expire,
-            "type": "access",
-        }
-        return jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
-
-    def create_refresh_token(self) -> str:
-        """创建JWT刷新令牌"""
-        expire = datetime.now(timezone.utc) + timedelta(
-            days=settings.REFRESH_TOKEN_EXPIRE_DAYS
-        )
-        to_encode = {
-            "id": self.id,
-            "email": self.email,
-            "exp": expire,
-            "type": "refresh",
-        }
-        return jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
-
-    @staticmethod
-    def verify_access_token(token: str):
-        """验证JWT token是否有效"""
-        try:
-            payload = jwt.decode(
-                token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
-            )
-            return payload
-        except JWTError:
-            return None

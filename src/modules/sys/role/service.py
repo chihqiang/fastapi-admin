@@ -13,13 +13,9 @@ from sqlalchemy.orm import joinedload, selectinload
 
 from src.core.exception import APIException
 from src.models.auth import Menu, Role, account_roles
-from src.modules.sys.role.schemas import (
-    RoleCreate,
-    RoleInfo,
-    RoleListRequest,
-    RoleListResponse,
-    RoleUpdate,
-)
+from src.modules.sys.role.schemas import (RoleCreate, RoleInfo,
+                                          RoleListRequest, RoleListResponse,
+                                          RoleUpdate)
 
 
 class RoleService:
@@ -47,7 +43,10 @@ class RoleService:
             total = await self._count(filters=filters)
 
         roles = await self._list_with_menus(
-            skip=request.offset, limit=request.size, role_id=request.id, name=request.name
+            skip=request.offset,
+            limit=request.size,
+            role_id=request.id,
+            name=request.name,
         )
 
         role_list = [RoleInfo.model_validate(role) for role in roles]
@@ -153,11 +152,7 @@ class RoleService:
 
     async def _get_with_menus(self, role_id: int) -> Role | None:
         """获取带菜单的角色详情"""
-        stmt = (
-            select(Role)
-            .options(joinedload(Role.menus))
-            .where(Role.id == role_id)
-        )
+        stmt = select(Role).options(joinedload(Role.menus)).where(Role.id == role_id)
         result = await self.db.execute(stmt)
         return result.scalars().unique().one_or_none()
 

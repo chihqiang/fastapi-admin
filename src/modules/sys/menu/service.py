@@ -12,13 +12,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.core.exception import APIException
 from src.models.auth import Menu, role_menus
-from src.modules.sys.menu.schemas import (
-    MenuCreate,
-    MenuInfo,
-    MenuListRequest,
-    MenuListResponse,
-    MenuUpdate,
-)
+from src.modules.sys.menu.schemas import (MenuCreate, MenuInfo,
+                                          MenuListRequest, MenuListResponse,
+                                          MenuUpdate)
 
 
 class MenuService:
@@ -58,7 +54,9 @@ class MenuService:
             stmt = stmt.offset(request.offset).limit(request.size)
             menus = (await self.db.execute(stmt)).scalars().all()
         else:
-            menus = await self._list(skip=request.offset, limit=request.size, filters=filters)
+            menus = await self._list(
+                skip=request.offset, limit=request.size, filters=filters
+            )
 
         menu_list = [MenuInfo.model_validate(menu) for menu in menus]
 

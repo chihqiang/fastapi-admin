@@ -6,19 +6,17 @@
 - 业务逻辑处理和数据验证
 """
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, selectinload
 
 from src.core.exception import APIException
 from src.models.auth import Account, Role
-from src.modules.sys.account.schemas import (
-    AccountCreate,
-    AccountInfo,
-    AccountListRequest,
-    AccountListResponse,
-    AccountUpdate,
-)
+from src.modules.sys.account.schemas import (AccountCreate, AccountInfo,
+                                             AccountListRequest,
+                                             AccountListResponse,
+                                             AccountUpdate)
+from src.utils.hashs import pwd
 
 
 class AccountService:
@@ -61,9 +59,9 @@ class AccountService:
         account = Account(
             name=account_data.name,
             email=account_data.email,
+            password=pwd.set_password_hash(account_data.password),
             status=account_data.status,
         )
-        account.set_password(account_data.password)
         self.db.add(account)
 
         if account_data.roles:
@@ -92,7 +90,7 @@ class AccountService:
             setattr(account, field, value)
 
         if account_data.password:
-            account.set_password(account_data.password)
+            account.password = pwd.set_password_hash(account_data.password)
 
         if account_data.roles is not None:
             role_ids = [role.id for role in account_data.roles]
@@ -103,7 +101,9 @@ class AccountService:
 
         return await self.get_detail(account_id)
 
-    async def delete(self, account_id: int, current_account: Account | None = None) -> None:
+    async def delete(
+        self, account_id: int, current_account: Account | None = None
+    ) -> None:
         """删除账号"""
         if current_account and account_id == current_account.id:
             raise APIException(msg="不能删除当前登录账户")
@@ -143,8 +143,6 @@ class AccountService:
 
     async def _count(self, filters: dict[str, object] | None = None) -> int:
         """获取记录总数"""
-        from sqlalchemy import func, select
-
         stmt = select(func.count()).select_from(Account)
         if filters:
             for field, value in filters.items():

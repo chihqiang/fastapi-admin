@@ -14,15 +14,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.core.database import get_db
 from src.core.dependencies import get_current_account
 from src.models.auth import Account
-from src.modules.auth.schemas import (
-    LoginForm,
-    LoginOutSchema,
-    ProfileOutSchema,
-    RefreshTokenForm,
-    RefreshTokenOutSchema,
-    RegisterForm,
-    RegisterOutSchema,
-)
+from src.modules.auth.schemas import (LoginForm, LoginOutSchema,
+                                      ProfileOutSchema, RefreshTokenForm,
+                                      RefreshTokenOutSchema, RegisterForm,
+                                      RegisterOutSchema)
 from src.modules.auth.service import AuthService
 from src.schemas.response import ApiResponse, success
 

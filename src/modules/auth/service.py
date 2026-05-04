@@ -12,24 +12,28 @@ from sqlalchemy.orm import joinedload
 
 from src.core.config import settings
 from src.core.exception import APIException, AuthenticationException
-from src.models.auth import Account
-from src.modules.auth.schemas import (
-    LoginForm,
-    LoginOutSchema,
-    MenuInfo,
-    ProfileOutSchema,
-    RefreshTokenOutSchema,
-    RegisterForm,
-    RegisterOutSchema,
-    RoleInfo,
-)
+from src.models.auth import Account, Role
+from src.modules.auth.schemas import (LoginForm, LoginOutSchema, MenuInfo,
+                                      ProfileOutSchema, RefreshTokenOutSchema,
+                                      RegisterForm, RegisterOutSchema,
+                                      RoleInfo)
+from src.utils.hashs import Token, pwd
 
 
 class AuthService:
     """认证服务类"""
 
+    db: AsyncSession
+    token_handler: Token
+
     def __init__(self, db: AsyncSession):
         self.db = db
+        self.token_handler = Token(
+            settings.SECRET_KEY,
+            settings.ALGORITHM,
+            settings.ACCESS_TOKEN_EXPIRE_MINUTES,
+            settings.REFRESH_TOKEN_EXPIRE_DAYS,
+        )
 
     async def register(self, form: RegisterForm) -> RegisterOutSchema:
         """用户注册"""
@@ -37,8 +41,11 @@ class AuthService:
         if existing:
             raise APIException(msg="邮箱已注册")
 
-        account = Account(name=form.name, email=form.email)
-        account.set_password(form.password)
+        account = Account(
+            name=form.name,
+            email=form.email,
+            password=pwd.set_password_hash(form.password),
+        )
 
         self.db.add(account)
         await self.db.commit()
@@ -56,11 +63,15 @@ class AuthService:
         if not account:
             raise APIException(msg="账户不存在")
 
-        if not account.verify_password(form_data.password):
+        if not pwd.verify_password(account.password, form_data.password):
             raise APIException(msg="账号或密码错误")
 
-        access_token = account.create_access_token()
-        refresh_token = account.create_refresh_token()
+        access_token = self.token_handler.create_access_token(
+            id=account.id, email=account.email
+        )
+        refresh_token = self.token_handler.create_refresh_token(
+            id=account.id, email=account.email
+        )
 
         return LoginOutSchema(
             id=account.id,
@@ -74,7 +85,7 @@ class AuthService:
 
     async def refresh_token(self, refresh_token: str) -> RefreshTokenOutSchema:
         """使用刷新令牌获取新的访问令牌"""
-        payload = Account.verify_access_token(refresh_token)
+        payload = self.token_handler.verify_token(refresh_token)
         if not payload:
             raise AuthenticationException(msg="刷新令牌已过期，请重新登录")
 
@@ -89,8 +100,12 @@ class AuthService:
         if not account:
             raise AuthenticationException(msg="账户不存在")
 
-        new_access_token = account.create_access_token()
-        new_refresh_token = account.create_refresh_token()
+        new_access_token = self.token_handler.create_access_token(
+            id=account.id, email=account.email
+        )
+        new_refresh_token = self.token_handler.create_refresh_token(
+            id=account.id, email=account.email
+        )
 
         return RefreshTokenOutSchema(
             access_token=new_access_token,
@@ -103,11 +118,11 @@ class AuthService:
         """获取当前用户资料和权限菜单"""
         stmt = (
             select(Account)
-            .options(joinedload(Account.roles).joinedload(__import__("src.models.auth", fromlist=["Role"]).Role.menus))
+            .options(joinedload(Account.roles).joinedload(Role.menus))
             .where(Account.id == account.id)
         )
         result = await self.db.execute(stmt)
-        account = result.scalars().unique().one_or_none()
+        account = result.scalars().unique().one()
 
         roles = [RoleInfo.model_validate(role) for role in account.roles]
 

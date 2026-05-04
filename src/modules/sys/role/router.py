@@ -14,14 +14,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.core.database import get_db
 from src.core.dependencies import AuthPermission
 from src.models.auth import Account
-from src.modules.sys.role.schemas import (
-    RoleAssociateMenusRequest,
-    RoleCreate,
-    RoleInfo,
-    RoleListRequest,
-    RoleListResponse,
-    RoleUpdate,
-)
+from src.modules.sys.role.schemas import (RoleAssociateMenusRequest,
+                                          RoleCreate, RoleInfo,
+                                          RoleListRequest, RoleListResponse,
+                                          RoleUpdate)
 from src.modules.sys.role.service import RoleService
 from src.schemas.response import ApiResponse, success
 

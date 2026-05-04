@@ -11,6 +11,7 @@ from src.core.config import settings
 from src.core.database import get_db
 from src.core.exception import AuthenticationException, PermissionException
 from src.models.auth import Account, Role
+from src.utils.hashs import Token
 
 
 async def get_current_account(
@@ -42,7 +43,7 @@ async def get_current_account(
         raise AuthenticationException(msg="凭证格式错误")
 
     # 校验 token
-    payload = Account.verify_access_token(token)
+    payload = Token.verify_token(token)
     if not payload:
         raise AuthenticationException(msg="登录已过期，请重新登录")
 
