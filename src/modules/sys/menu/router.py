@@ -18,7 +18,7 @@ from src.modules.sys.menu.schemas import (MenuCreate, MenuInfo,
                                           MenuListRequest, MenuListResponse,
                                           MenuUpdate)
 from src.modules.sys.menu.service import MenuService
-from src.schemas.response import ApiResponse, success
+from src.schemas.response import ResponseSchema, success
 
 router = APIRouter(prefix="/menu", tags=["系统管理-菜单管理"])
 
@@ -27,7 +27,7 @@ router = APIRouter(prefix="/menu", tags=["系统管理-菜单管理"])
     "/list",
     summary="获取菜单列表",
     description="分页查询菜单列表，支持按ID、名称精确搜索和状态筛选",
-    response_model=ApiResponse[MenuListResponse],
+    response_model=ResponseSchema[MenuListResponse],
 )
 async def menu_list(
     request: Annotated[MenuListRequest, Depends()],
@@ -46,7 +46,7 @@ async def menu_list(
     "/all",
     summary="获取所有菜单",
     description="获取所有菜单列表，不分页，用于下拉选择和树形展示",
-    response_model=ApiResponse[list[MenuInfo]],
+    response_model=ResponseSchema[list[MenuInfo]],
 )
 async def menu_all(
     db: Annotated[AsyncSession, Depends(get_db)],
@@ -64,7 +64,7 @@ async def menu_all(
     "/detail",
     summary="获取菜单详情",
     description="根据菜单ID获取菜单详细信息",
-    response_model=ApiResponse[MenuInfo],
+    response_model=ResponseSchema[MenuInfo],
 )
 async def menu_detail(
     id: int,
@@ -83,7 +83,7 @@ async def menu_detail(
     "/create",
     summary="创建菜单",
     description="创建新菜单，支持目录、菜单、按钮三种类型",
-    response_model=ApiResponse[MenuInfo],
+    response_model=ResponseSchema[MenuInfo],
 )
 async def menu_create(
     menu_data: MenuCreate,
@@ -102,7 +102,7 @@ async def menu_create(
     "/update",
     summary="更新菜单",
     description="更新菜单信息，支持修改菜单类型、路径、组件等属性",
-    response_model=ApiResponse[MenuInfo],
+    response_model=ResponseSchema[MenuInfo],
 )
 async def menu_update(
     menu_data: MenuUpdate,
@@ -121,7 +121,7 @@ async def menu_update(
     "/delete",
     summary="删除菜单",
     description="根据菜单ID删除菜单",
-    response_model=ApiResponse[None],
+    response_model=ResponseSchema[None],
 )
 async def menu_delete(
     id: int,

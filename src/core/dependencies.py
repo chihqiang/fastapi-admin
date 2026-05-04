@@ -10,8 +10,9 @@ from sqlalchemy.orm import joinedload
 from src.core.config import settings
 from src.core.database import get_db
 from src.core.exception import AuthenticationException, PermissionException
+from src.core.instance import token_instance
+from src.core.requests import get_bearer_token
 from src.models.auth import Account, Role
-from src.utils.hashs import Token
 
 
 async def get_current_account(
@@ -30,25 +31,15 @@ async def get_current_account(
         AuthenticationException: token 无效或已过期时抛出
     """
     # 从请求头获取 token
-    authorization = request.headers.get("Authorization")
-    if not authorization:
-        raise AuthenticationException(msg="未提供身份凭证")
-
-    # 拆分 Bearer 和 token
-    try:
-        token_type, token = authorization.split()
-        if token_type.lower() != "bearer":
-            raise AuthenticationException(msg="凭证类型错误")
-    except ValueError:
-        raise AuthenticationException(msg="凭证格式错误")
+    token = get_bearer_token(request)
 
     # 校验 token
-    payload = Token.verify_token(token)
+    payload = token_instance.verify_token(token)
     if not payload:
         raise AuthenticationException(msg="登录已过期，请重新登录")
 
     # 获取用户ID
-    account_id = payload.get("id")
+    account_id = payload.id
     if not account_id:
         raise AuthenticationException(msg="无效凭证")
 

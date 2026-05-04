@@ -19,7 +19,7 @@ from src.modules.sys.role.schemas import (RoleAssociateMenusRequest,
                                           RoleListRequest, RoleListResponse,
                                           RoleUpdate)
 from src.modules.sys.role.service import RoleService
-from src.schemas.response import ApiResponse, success
+from src.schemas.response import ResponseSchema, success
 
 router = APIRouter(prefix="/role", tags=["系统管理-角色管理"])
 
@@ -28,7 +28,7 @@ router = APIRouter(prefix="/role", tags=["系统管理-角色管理"])
     "/list",
     summary="获取角色列表",
     description="分页查询角色列表，支持按ID精确搜索和名称模糊搜索",
-    response_model=ApiResponse[RoleListResponse],
+    response_model=ResponseSchema[RoleListResponse],
 )
 async def role_list(
     request: Annotated[RoleListRequest, Depends()],
@@ -47,7 +47,7 @@ async def role_list(
     "/detail",
     summary="获取角色详情",
     description="根据角色ID获取角色详细信息",
-    response_model=ApiResponse[RoleInfo],
+    response_model=ResponseSchema[RoleInfo],
 )
 async def role_detail(
     id: int,
@@ -66,7 +66,7 @@ async def role_detail(
     "/create",
     summary="创建角色",
     description="创建新角色，可关联菜单权限",
-    response_model=ApiResponse[RoleInfo],
+    response_model=ResponseSchema[RoleInfo],
 )
 async def role_create(
     role_data: RoleCreate,
@@ -85,7 +85,7 @@ async def role_create(
     "/update",
     summary="更新角色",
     description="更新角色信息，可修改关联的菜单权限",
-    response_model=ApiResponse[RoleInfo],
+    response_model=ResponseSchema[RoleInfo],
 )
 async def role_update(
     role_data: RoleUpdate,
@@ -104,7 +104,7 @@ async def role_update(
     "/delete",
     summary="删除角色",
     description="根据角色ID删除角色",
-    response_model=ApiResponse[None],
+    response_model=ResponseSchema[None],
 )
 async def role_delete(
     id: int,
@@ -124,7 +124,7 @@ async def role_delete(
     "/all",
     summary="获取所有角色",
     description="获取所有角色列表，不分页，用于下拉选择",
-    response_model=ApiResponse[list[RoleInfo]],
+    response_model=ResponseSchema[list[RoleInfo]],
 )
 async def role_all(
     db: Annotated[AsyncSession, Depends(get_db)],
@@ -142,7 +142,7 @@ async def role_all(
     "/associate-menus",
     summary="关联角色菜单",
     description="为角色分配或更新菜单权限",
-    response_model=ApiResponse[RoleInfo],
+    response_model=ResponseSchema[RoleInfo],
 )
 async def role_associate_menus(
     request: RoleAssociateMenusRequest,

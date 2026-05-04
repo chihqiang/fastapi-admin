@@ -30,13 +30,13 @@ class PageParams(BaseModel):
         return (self.page - 1) * self.size
 
 
-class PageResponse(BaseModel, Generic[T]):
+class PageSchema(BaseModel, Generic[T]):
     """分页响应模型基类
 
     所有列表查询响应应使用此模型，通过泛型指定 items 的数据类型。
 
     Example:
-        >>> class UserListResponse(PageResponse[UserInfo]):
+        >>> class UserListResponse(PageSchema[UserInfo]):
         ...     pass
         >>>
         >>> # 直接构造，pages 自动计算

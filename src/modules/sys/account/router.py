@@ -19,12 +19,12 @@ from src.modules.sys.account.schemas import (AccountCreate, AccountInfo,
                                              AccountListResponse,
                                              AccountUpdate)
 from src.modules.sys.account.service import AccountService
-from src.schemas.response import ApiResponse, success
+from src.schemas.response import ResponseSchema, success
 
 router = APIRouter(prefix="/account", tags=["系统管理-账号管理"])
 
 
-@router.get("/list", response_model=ApiResponse[AccountListResponse])
+@router.get("/list", response_model=ResponseSchema[AccountListResponse])
 async def account_list(
     request: Annotated[AccountListRequest, Depends()],
     db: Annotated[AsyncSession, Depends(get_db)],
@@ -38,7 +38,7 @@ async def account_list(
     return success(data=result)
 
 
-@router.get("/detail", response_model=ApiResponse[AccountInfo])
+@router.get("/detail", response_model=ResponseSchema[AccountInfo])
 async def account_detail(
     id: int,
     db: Annotated[AsyncSession, Depends(get_db)],
@@ -53,7 +53,7 @@ async def account_detail(
     return success(data=result)
 
 
-@router.post("/create", response_model=ApiResponse[AccountInfo])
+@router.post("/create", response_model=ResponseSchema[AccountInfo])
 async def account_create(
     account_data: AccountCreate,
     db: Annotated[AsyncSession, Depends(get_db)],
@@ -68,7 +68,7 @@ async def account_create(
     return success(msg="创建成功", data=result)
 
 
-@router.put("/update", response_model=ApiResponse[AccountInfo])
+@router.put("/update", response_model=ResponseSchema[AccountInfo])
 async def account_update(
     account_data: AccountUpdate,
     db: Annotated[AsyncSession, Depends(get_db)],
@@ -83,7 +83,7 @@ async def account_update(
     return success(msg="更新成功", data=result)
 
 
-@router.delete("/delete", response_model=ApiResponse[None])
+@router.delete("/delete", response_model=ResponseSchema[None])
 async def account_delete(
     id: int,
     db: Annotated[AsyncSession, Depends(get_db)],

@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 
 from src.modules.sys.account.router import router as account_router
+from src.modules.sys.log.router import router as log_router
 from src.modules.sys.menu.router import router as menu_router
 from src.modules.sys.role.router import router as role_router
 
@@ -15,3 +16,6 @@ router.include_router(role_router)
 
 # 包含菜单管理路由
 router.include_router(menu_router)
+
+# 包含日志管理路由
+router.include_router(log_router)

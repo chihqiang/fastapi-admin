@@ -27,6 +27,16 @@ class Settings(BaseSettings):
     LOG_LEVEL: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = "INFO"
     LOG_FORMAT: Literal["json", "console", "text"] = "console"  # json/console/text
     LOG_FILE: str | None = None  # 日志文件路径，为None时不写入文件
+    OPERATION_LOG_RECORD: bool = True  # 是否记录操作日志
+    IGNORE_OPERATION_FUNCTION: list[str] = []
+    OPERATION_RECORD_METHOD: list[str] = [
+        "POST",
+        "PUT",
+        "PATCH",
+        "DELETE",
+        "HEAD",
+        "OPTIONS",
+    ]
     # ================================================= #
     # ******************* 登录认证配置 ****************** #
     # ================================================= #

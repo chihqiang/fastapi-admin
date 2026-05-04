@@ -12,28 +12,22 @@ from sqlalchemy.orm import joinedload
 
 from src.core.config import settings
 from src.core.exception import APIException, AuthenticationException
+from src.core.instance import token_instance
 from src.models.auth import Account, Role
 from src.modules.auth.schemas import (LoginForm, LoginOutSchema, MenuInfo,
                                       ProfileOutSchema, RefreshTokenOutSchema,
                                       RegisterForm, RegisterOutSchema,
                                       RoleInfo)
-from src.utils.hashs import Token, TokenType, pwd
+from src.utils.hashs import TokenType, pwd
 
 
 class AuthService:
     """认证服务类"""
 
     db: AsyncSession
-    token_handler: Token
 
     def __init__(self, db: AsyncSession):
         self.db = db
-        self.token_handler = Token(
-            settings.SECRET_KEY,
-            settings.ALGORITHM,
-            settings.ACCESS_TOKEN_EXPIRE_MINUTES,
-            settings.REFRESH_TOKEN_EXPIRE_DAYS,
-        )
 
     async def register(self, form: RegisterForm) -> RegisterOutSchema:
         """用户注册"""
@@ -66,10 +60,10 @@ class AuthService:
         if not pwd.verify_password(account.password, form_data.password):
             raise APIException(msg="账号或密码错误")
 
-        access_token = self.token_handler.create_access_token(
+        access_token = token_instance.create_access_token(
             id=account.id, email=account.email
         )
-        refresh_token = self.token_handler.create_refresh_token(
+        refresh_token = token_instance.create_refresh_token(
             id=account.id, email=account.email
         )
 
@@ -85,7 +79,7 @@ class AuthService:
 
     async def refresh_token(self, refresh_token: str) -> RefreshTokenOutSchema:
         """使用刷新令牌获取新的访问令牌"""
-        payload = self.token_handler.verify_token(refresh_token)
+        payload = token_instance.verify_token(refresh_token)
         if not payload:
             raise AuthenticationException(msg="刷新令牌已过期，请重新登录")
 
@@ -100,10 +94,10 @@ class AuthService:
         if not account:
             raise AuthenticationException(msg="账户不存在")
 
-        new_access_token = self.token_handler.create_access_token(
+        new_access_token = token_instance.create_access_token(
             id=account.id, email=account.email
         )
-        new_refresh_token = self.token_handler.create_refresh_token(
+        new_refresh_token = token_instance.create_refresh_token(
             id=account.id, email=account.email
         )
 

@@ -56,7 +56,9 @@ def upgrade() -> None:
         (21, 6, 3, '菜单详情', '', '', '', 3, '/api/v1/sys/menu/detail', 'GET', 1, 1, '获取菜单详情'),
         (22, 6, 3, '创建菜单', '', '', '', 4, '/api/v1/sys/menu/create', 'POST', 1, 1, '创建菜单'),
         (23, 6, 3, '更新菜单', '', '', '', 5, '/api/v1/sys/menu/update', 'PUT', 1, 1, '更新菜单'),
-        (24, 6, 3, '删除菜单', '', '', '', 6, '/api/v1/sys/menu/delete', 'DELETE', 1, 1, '删除菜单')
+        (24, 6, 3, '删除菜单', '', '', '', 6, '/api/v1/sys/menu/delete', 'DELETE', 1, 1, '删除菜单'),
+        (25, 3, 2, '日志管理', '/admin/sys/log', 'admin/sys/log/page', 'Log', 4, '', '*', 1, 1, '日志管理菜单'),
+        (26, 25, 3, '日志列表', '', '', '', 1, '/api/v1/sys/log/list', 'GET', 1, 1, '获取日志列表')
     """)
 
     # 3. 管理员账号
@@ -72,7 +74,8 @@ def upgrade() -> None:
         (1, 1), (1, 2), (1, 3), (1, 4), (1, 5), (1, 6),
         (1, 7), (1, 8), (1, 9), (1, 10), (1, 11),
         (1, 12), (1, 13), (1, 14), (1, 15), (1, 16), (1, 17), (1, 18),
-        (1, 19), (1, 20), (1, 21), (1, 22), (1, 23), (1, 24)
+        (1, 19), (1, 20), (1, 21), (1, 22), (1, 23), (1, 24),
+        (1, 25), (1, 26)
     """)
 
     # 5. 账号-角色关联
@@ -86,6 +89,6 @@ def downgrade() -> None:
     """删除初始数据"""
     op.execute("DELETE FROM sys_account_roles")
     op.execute("DELETE FROM sys_role_menus")
-    op.execute("DELETE FROM sys_menus WHERE id >= 1")
+    op.execute("DELETE FROM sys_menus WHERE id >= 1 AND id <= 26")
     op.execute("DELETE FROM sys_accounts WHERE id = 1")
     op.execute("DELETE FROM sys_roles WHERE id = 1")

@@ -2,7 +2,7 @@ from typing import ClassVar
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from src.schemas.pagination import PageParams, PageResponse
+from src.schemas.pagination import PageParams, PageSchema
 
 
 class RoleId(BaseModel):
@@ -62,7 +62,7 @@ class AccountListRequest(PageParams):
     id: int | None = Field(default=None, description="账号ID，用于精确搜索")
 
 
-class AccountListResponse(PageResponse[AccountInfo]):
+class AccountListResponse(PageSchema[AccountInfo]):
     """账号列表响应模型"""
 
     pass

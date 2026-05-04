@@ -2,7 +2,7 @@ from typing import ClassVar
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from src.schemas.pagination import PageParams, PageResponse
+from src.schemas.pagination import PageParams, PageSchema
 
 
 class MenuId(BaseModel):
@@ -62,7 +62,7 @@ class RoleListRequest(PageParams):
     name: str | None = Field(default=None, description="角色名称，用于模糊搜索")
 
 
-class RoleListResponse(PageResponse[RoleInfo]):
+class RoleListResponse(PageSchema[RoleInfo]):
     """角色列表响应模型"""
 
     pass

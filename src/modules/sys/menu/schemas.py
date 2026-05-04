@@ -2,7 +2,7 @@ from typing import ClassVar
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from src.schemas.pagination import PageParams, PageResponse
+from src.schemas.pagination import PageParams, PageSchema
 
 
 class MenuBase(BaseModel):
@@ -54,7 +54,7 @@ class MenuListRequest(PageParams):
     status: bool | None = Field(default=None, description="状态筛选")
 
 
-class MenuListResponse(PageResponse[MenuInfo]):
+class MenuListResponse(PageSchema[MenuInfo]):
     """菜单列表响应模型"""
 
     pass
