@@ -3,7 +3,7 @@ from typing import List
 
 import bcrypt
 from jose import JWTError, jwt
-from sqlalchemy import Column, ForeignKey, Integer, String, Table
+from sqlalchemy import Column, ForeignKey, Index, Integer, String, Table
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.core.config import settings
@@ -56,7 +56,11 @@ class Menu(Base):
     """菜单表"""
 
     __tablename__ = "sys_menus"
-    __table_args__ = {"comment": "菜单表"}
+    __table_args__ = (
+        Index("idx_menu_pid", "pid"),
+        Index("idx_menu_status", "status"),
+        {"comment": "菜单表"},
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True, comment="菜单ID")
     pid: Mapped[int] = mapped_column(default=0, comment="父菜单ID")
@@ -116,7 +120,11 @@ class Account(Base):
     """账号/用户表"""
 
     __tablename__ = "sys_accounts"
-    __table_args__ = {"comment": "账号表"}
+    __table_args__ = (
+        Index("idx_account_email", "email", unique=True),
+        Index("idx_account_status", "status"),
+        {"comment": "账号表"},
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True, comment="主键ID")
     name: Mapped[str] = mapped_column(
