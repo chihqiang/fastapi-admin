@@ -14,5 +14,5 @@ from src.modules.sys.route import router as sys_router
 def register_routers(app: FastAPI) -> None:
     """注册所有路由"""
     prefix = settings.API_V1_PREFIX
-    app.include_router(auth_router, prefix=prefix, tags=["auth"])
-    app.include_router(sys_router, prefix=prefix, tags=["system"])
+    app.include_router(auth_router, prefix=prefix)
+    app.include_router(sys_router, prefix=prefix)

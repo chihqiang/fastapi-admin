@@ -31,6 +31,9 @@
 git clone https://github.com/chihqiang/fastapi-admin.git
 cd fastapi-admin
 
+# 安装skills
+npx skills add fastapi/fastapi --skill fastapi
+
 # 安装依赖
 uv sync
 

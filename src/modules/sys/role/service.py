@@ -11,6 +11,7 @@ from sqlalchemy import exists, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, selectinload
 
+from src.core.config import settings
 from src.core.exception import APIException
 from src.models.auth import Menu, Role, account_roles
 from src.modules.sys.role.schemas import (RoleCreate, RoleInfo,
@@ -91,31 +92,50 @@ class RoleService:
 
     async def update(self, role_id: int, role_data: RoleUpdate) -> RoleInfo:
         """更新角色"""
+        # 1. 判断角色是否存在
         role = await self._get_with_menus(role_id)
         if not role:
             raise APIException(msg="角色不存在")
 
+        # 2. 判断角色名是否存在（排除自身）
         if role_data.name != role.name:
             if await self._get_by_name(role_data.name):
                 raise APIException(msg="角色名称已存在")
 
+        # 3. 判断是否是超级管理员组
+        is_super_admin = (
+            settings.SUPER_ADMIN_ROLE_IDS and role_id in settings.SUPER_ADMIN_ROLE_IDS
+        )
+
+        # 4. 更新基本信息
         for field, value in role_data.model_dump(
             exclude={"menus"}, exclude_unset=True
         ).items():
             if hasattr(role, field):
                 setattr(role, field, value)
 
-        if role_data.menus is not None:
-            menu_ids = [menu.id for menu in role_data.menus]
-            role.menus = await self._get_menus_by_ids(menu_ids)
+        # 5. 更新菜单关联
+        if is_super_admin:
+            # 超级管理员：获取所有菜单进行关联
+            all_menus_stmt = select(Menu).where(Menu.status)
+            all_menus_result = await self.db.execute(all_menus_stmt)
+            role.menus = list(all_menus_result.scalars().all())
+        else:
+            # 普通角色：更新前端传来的菜单
+            if role_data.menus is not None:
+                menu_ids = [menu.id for menu in role_data.menus]
+                role.menus = await self._get_menus_by_ids(menu_ids)
 
         await self.db.commit()
         await self.db.refresh(role)
-
         return await self.get_detail(role_id)
 
     async def delete(self, role_id: int) -> None:
         """删除角色"""
+        # 检查是否是超级管理员角色
+        if settings.SUPER_ADMIN_ROLE_IDS and role_id in settings.SUPER_ADMIN_ROLE_IDS:
+            raise APIException(msg="超级管理员角色不能删除")
+
         account_exists = await self.db.execute(
             select(exists().where(account_roles.c.role_id == role_id))
         )

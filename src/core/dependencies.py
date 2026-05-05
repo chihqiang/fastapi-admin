@@ -116,6 +116,12 @@ class AuthPermission:
         Raises:
         - PermissionException: 无权限时抛出
         """
+        # 检查用户是否在超级管理员角色组中
+        if settings.SUPER_ADMIN_ROLE_IDS:
+            account_role_ids = [role.id for role in account.roles]
+            if set(account_role_ids) & set(settings.SUPER_ADMIN_ROLE_IDS):
+                return account
+
         # 无需验证权限（未设置 api_url）
         if not self.api_url:
             return account

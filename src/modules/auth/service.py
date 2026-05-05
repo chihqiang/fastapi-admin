@@ -13,7 +13,7 @@ from sqlalchemy.orm import joinedload
 from src.core.config import settings
 from src.core.exception import APIException, AuthenticationException
 from src.core.instance import token_instance
-from src.models.auth import Account, Role
+from src.models.auth import Account, Menu, Role
 from src.modules.auth.schemas import (LoginForm, LoginOutSchema, MenuInfo,
                                       ProfileOutSchema, RefreshTokenOutSchema,
                                       RegisterForm, RegisterOutSchema,
@@ -119,19 +119,30 @@ class AuthService:
         account = result.scalars().unique().one()
 
         roles = [RoleInfo.model_validate(role) for role in account.roles]
+        role_ids = [role.id for role in account.roles]
 
-        menu_dict: dict[int, MenuInfo] = {}
-        for role in account.roles:
-            for menu in role.menus:
-                if menu.id not in menu_dict:
-                    menu_dict[menu.id] = MenuInfo.model_validate(menu)
+        # 超级管理员：返回所有菜单
+        if settings.SUPER_ADMIN_ROLE_IDS and set(role_ids) & set(
+            settings.SUPER_ADMIN_ROLE_IDS
+        ):
+            all_menus_stmt = select(Menu).where(Menu.status)
+            all_menus_result = await self.db.execute(all_menus_stmt)
+            all_menus = all_menus_result.scalars().all()
+            menus = [MenuInfo.model_validate(menu) for menu in all_menus]
+        else:
+            menu_dict: dict[int, MenuInfo] = {}
+            for role in account.roles:
+                for menu in role.menus:
+                    if menu.id not in menu_dict:
+                        menu_dict[menu.id] = MenuInfo.model_validate(menu)
+            menus = list(menu_dict.values())
 
         return ProfileOutSchema(
             id=account.id,
             name=account.name,
             email=account.email,
             roles=roles,
-            menus=list(menu_dict.values()),
+            menus=menus,
         )
 
     # ==================== 私有方法 ====================

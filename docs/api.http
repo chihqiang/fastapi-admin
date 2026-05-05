@@ -285,19 +285,3 @@ Authorization: Bearer {{login.response.body.data.access_token}}
 ### 30. 获取日志列表
 GET {{host}}/api/v1/sys/log/list?page=1&size=10
 Authorization: Bearer {{login.response.body.data.access_token}}
-
-### 31. 获取日志列表（按请求IP模糊搜索）
-GET {{host}}/api/v1/sys/log/list?page=1&size=10&request_ip=127.0.0.1
-Authorization: Bearer {{login.response.body.data.access_token}}
-
-### 32. 获取日志列表（按账号ID精确搜索）
-GET {{host}}/api/v1/sys/log/list?page=1&size=10&account_id=1
-Authorization: Bearer {{login.response.body.data.access_token}}
-
-### 33. 获取日志列表（按请求方法搜索）
-GET {{host}}/api/v1/sys/log/list?page=1&size=10&request_method=POST
-Authorization: Bearer {{login.response.body.data.access_token}}
-
-### 34. 获取日志列表（按请求路径模糊搜索）
-GET {{host}}/api/v1/sys/log/list?page=1&size=10
-Authorization: Bearer {{login.response.body.data.access_token}}

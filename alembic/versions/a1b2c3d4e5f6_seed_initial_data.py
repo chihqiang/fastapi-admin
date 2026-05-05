@@ -1,4 +1,4 @@
-"""seed initial data
+"""seed initial data from json (universal version)
 
 Revision ID: a1b2c3d4e5f6
 Revises: c6c4b787c863
@@ -6,9 +6,12 @@ Create Date: 2026-05-03 15:05:00.000000
 
 """
 
+import json
+import os
 from typing import Sequence, Union
 
 import bcrypt
+from sqlalchemy import text
 
 from alembic import op
 
@@ -18,77 +21,113 @@ down_revision: Union[str, Sequence[str], None] = "c6c4b787c863"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
+# ====================== 核心配置 ======================
+# JSON key => 数据库表名
+TABLE_MAP = {
+    "accounts": "sys_accounts",
+    "roles": "sys_roles",
+    "menus": "sys_menus",
+}
 
+# 多对多关联表配置 (表名, 左ID, 右ID)
+MANY_TO_MANY = [
+    ("sys_account_roles", "account_id", "role_id"),
+    ("sys_role_menus", "role_id", "menu_id"),
+]
+
+# 需要加密的密码字段
+PASSWORD_FIELDS = ["password"]
+
+# 插入时自动填充的默认值
+DEFAULT_FIELDS = {
+    "sys_accounts": {"status": 1},  # 1 = 启用
+}
+# ======================================================
+
+
+def load_json() -> dict:
+    """加载初始 JSON 数据"""
+    path = os.path.join(os.path.dirname(__file__), "..", "..", "docs", "data.json")
+    with open(path, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+
+def sql_escape(val):
+    """安全转义 SQL 值"""
+    if val is None:
+        return "NULL"
+    if isinstance(val, bool):
+        return "1" if val else "0"
+    if isinstance(val, (int, float)):
+        return str(val)
+    s = str(val).replace("'", "''")
+    return f"'{s}'"
+
+
+def build_insert_sql(table: str, data: dict) -> str:
+    """自动构建插入 SQL（支持任意字段）"""
+    cols = []
+    vals = []
+    for k, v in data.items():
+        cols.append(k)
+        vals.append(sql_escape(v))
+    cols_str = ",".join(cols)
+    vals_str = ",".join(vals)
+    return f"INSERT INTO {table} ({cols_str}) VALUES ({vals_str})"
+
+
+# ====================== 升级：插入数据 ======================
 def upgrade() -> None:
-    """插入初始数据（与 migrate.py 保持一致）"""
-    password_hash = bcrypt.hashpw("123456".encode(), bcrypt.gensalt()).decode()
+    data = load_json()
 
-    # 1. 超级管理员角色
-    op.execute("""
-        INSERT INTO sys_roles (id, name, sort, status, remark)
-        VALUES (1, '超级管理员', 1, 1, '超级管理员角色，拥有所有权限')
-    """)
+    # 1. 插入普通表
+    for json_key, table in TABLE_MAP.items():
+        for item in data.get(json_key, []):
+            # 自动填充默认值
+            if table in DEFAULT_FIELDS:
+                item.update(DEFAULT_FIELDS[table])
+            # 自动加密密码
+            for field in PASSWORD_FIELDS:
+                if field in item:
+                    raw_pwd = item[field]
+                    item[field] = bcrypt.hashpw(
+                        raw_pwd.encode(), bcrypt.gensalt()
+                    ).decode()
+            sql = build_insert_sql(table, item)
+            op.execute(text(sql))
 
-    # 2. 菜单结构
-    op.execute("""
-        INSERT INTO sys_menus (id, pid, menu_type, name, path, component, icon, sort, api_url, api_method, visible, status, remark)
-        VALUES
-        (1, 0, 1, '仪表盘', '/admin/dashboard', 'admin/dashboard/page', 'Dashboard', 1, '', '*', 1, 1, '仪表盘目录'),
-        (2, 1, 2, '数据概览', '/admin/dashboard', 'admin/dashboard/page', 'Dashboard', 1, '', '*', 1, 1, '仪表盘页面'),
-        (3, 0, 1, '系统管理', '/admin/sys', 'admin/sys/page', 'Setting', 2, '', '*', 1, 1, '系统管理目录'),
-        (4, 3, 2, '账号管理', '/admin/sys/account', 'admin/sys/account/page', 'Users', 1, '', '*', 1, 1, '账号管理菜单'),
-        (5, 3, 2, '角色管理', '/admin/sys/roles', 'admin/sys/roles/page', 'UserRole', 2, '', '*', 1, 1, '角色管理菜单'),
-        (6, 3, 2, '菜单管理', '/admin/sys/menu', 'admin/sys/menu/page', 'Menu', 3, '', '*', 1, 1, '菜单管理菜单'),
-        (7, 4, 3, '账号列表', '', '', '', 1, '/api/v1/sys/account/list', 'GET', 1, 1, '获取账号列表'),
-        (8, 4, 3, '账号详情', '', '', '', 2, '/api/v1/sys/account/detail', 'GET', 1, 1, '获取账号详情'),
-        (9, 4, 3, '创建账号', '', '', '', 3, '/api/v1/sys/account/create', 'POST', 1, 1, '创建账号'),
-        (10, 4, 3, '更新账号', '', '', '', 4, '/api/v1/sys/account/update', 'PUT', 1, 1, '更新账号'),
-        (11, 4, 3, '删除账号', '', '', '', 5, '/api/v1/sys/account/delete', 'DELETE', 1, 1, '删除账号'),
-        (12, 5, 3, '角色列表', '', '', '', 1, '/api/v1/sys/role/list', 'GET', 1, 1, '获取角色列表'),
-        (13, 5, 3, '角色详情', '', '', '', 2, '/api/v1/sys/role/detail', 'GET', 1, 1, '获取角色详情'),
-        (14, 5, 3, '创建角色', '', '', '', 3, '/api/v1/sys/role/create', 'POST', 1, 1, '创建角色'),
-        (15, 5, 3, '更新角色', '', '', '', 4, '/api/v1/sys/role/update', 'PUT', 1, 1, '更新角色'),
-        (16, 5, 3, '删除角色', '', '', '', 5, '/api/v1/sys/role/delete', 'DELETE', 1, 1, '删除角色'),
-        (17, 5, 3, '所有角色', '', '', '', 6, '/api/v1/sys/role/all', 'GET', 1, 1, '获取所有角色列表'),
-        (18, 5, 3, '关联菜单', '', '', '', 7, '/api/v1/sys/role/associate-menus', 'POST', 1, 1, '关联角色和菜单'),
-        (19, 6, 3, '菜单列表', '', '', '', 1, '/api/v1/sys/menu/list', 'GET', 1, 1, '获取菜单列表'),
-        (20, 6, 3, '所有菜单', '', '', '', 2, '/api/v1/sys/menu/all', 'GET', 1, 1, '获取所有菜单列表'),
-        (21, 6, 3, '菜单详情', '', '', '', 3, '/api/v1/sys/menu/detail', 'GET', 1, 1, '获取菜单详情'),
-        (22, 6, 3, '创建菜单', '', '', '', 4, '/api/v1/sys/menu/create', 'POST', 1, 1, '创建菜单'),
-        (23, 6, 3, '更新菜单', '', '', '', 5, '/api/v1/sys/menu/update', 'PUT', 1, 1, '更新菜单'),
-        (24, 6, 3, '删除菜单', '', '', '', 6, '/api/v1/sys/menu/delete', 'DELETE', 1, 1, '删除菜单'),
-        (25, 3, 2, '日志管理', '/admin/sys/log', 'admin/sys/log/page', 'Log', 4, '', '*', 1, 1, '日志管理菜单'),
-        (26, 25, 3, '日志列表', '', '', '', 1, '/api/v1/sys/log/list', 'GET', 1, 1, '获取日志列表')
-    """)
-
-    # 3. 管理员账号
-    op.execute(f"""
-        INSERT INTO sys_accounts (id, name, email, password, status)
-        VALUES (1, '超级管理员', 'admin@example.com', '{password_hash}', 1)
-    """)
-
-    # 4. 角色-菜单关联（所有菜单分配给超级管理员角色）
-    op.execute("""
-        INSERT INTO sys_role_menus (role_id, menu_id)
-        VALUES
-        (1, 1), (1, 2), (1, 3), (1, 4), (1, 5), (1, 6),
-        (1, 7), (1, 8), (1, 9), (1, 10), (1, 11),
-        (1, 12), (1, 13), (1, 14), (1, 15), (1, 16), (1, 17), (1, 18),
-        (1, 19), (1, 20), (1, 21), (1, 22), (1, 23), (1, 24),
-        (1, 25), (1, 26)
-    """)
-
-    # 5. 账号-角色关联
-    op.execute("""
-        INSERT INTO sys_account_roles (account_id, role_id)
-        VALUES (1, 1)
-    """)
+    # 2. 插入多对多关联
+    for rel_table, id_left, id_right in MANY_TO_MANY:
+        for item in data.get(rel_table, []):
+            left_val = item[id_left]
+            right_vals = item[f"{id_right}s"]  # menu_ids / role_ids
+            for rv in right_vals:
+                op.execute(
+                    text(
+                        f"INSERT INTO {rel_table} ({id_left}, {id_right}) VALUES ({left_val}, {rv})"
+                    )
+                )
 
 
+# ====================== 降级：只删除 JSON 里的数据 ======================
 def downgrade() -> None:
-    """删除初始数据"""
-    op.execute("DELETE FROM sys_account_roles")
-    op.execute("DELETE FROM sys_role_menus")
-    op.execute("DELETE FROM sys_menus WHERE id >= 1 AND id <= 26")
-    op.execute("DELETE FROM sys_accounts WHERE id = 1")
-    op.execute("DELETE FROM sys_roles WHERE id = 1")
+    data = load_json()
+
+    # 1. 删除多对多关联表（按 JSON 里的 ID 删除）
+    for rel_table, id_left, id_right in MANY_TO_MANY:
+        for item in data.get(rel_table, []):
+            left_val = item[id_left]
+            right_vals = item[f"{id_right}s"]
+            for rv in right_vals:
+                op.execute(
+                    text(
+                        f"DELETE FROM {rel_table} WHERE {id_left} = {left_val} AND {id_right} = {rv}"
+                    )
+                )
+
+    # 2. 删除主表（只删除 JSON 里的 id）
+    for json_key, table in TABLE_MAP.items():
+        ids = [str(item["id"]) for item in data.get(json_key, []) if "id" in item]
+        if ids:
+            id_str = ",".join(ids)
+            op.execute(text(f"DELETE FROM {table} WHERE id IN ({id_str})"))
