@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-import os
+from pathlib import Path
 from typing import ClassVar, Literal
 from urllib.parse import quote_plus
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-ROOT_PATH = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+_root_dir = Path(__file__).parent.parent.parent
 
 
 class Settings(BaseSettings):
@@ -20,6 +20,11 @@ class Settings(BaseSettings):
     # ================================================= #
     SERVER_HOST: str = "0.0.0.0"  # 允许访问的IP地址
     SERVER_PORT: int = 8000  # 服务端口
+
+    # ================================================= #
+    # ******************* 路径配置 ****************** #
+    # ================================================= #
+    ROOT_PATH: Path = _root_dir
 
     # ================================================= #
     # ******************** 日志配置 ******************** #

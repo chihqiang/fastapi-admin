@@ -7,13 +7,13 @@ Create Date: 2026-05-03 15:05:00.000000
 """
 
 import json
-import os
 from typing import Sequence, Union
 
 import bcrypt
 from sqlalchemy import text
 
 from alembic import op
+from src.core.config import settings
 
 # revision identifiers, used by Alembic.
 revision: str = "a1b2c3d4e5f6"
@@ -47,7 +47,7 @@ DEFAULT_FIELDS = {
 
 def load_json() -> dict:
     """加载初始 JSON 数据"""
-    path = os.path.join(os.path.dirname(__file__), "..", "..", "docs", "data.json")
+    path = settings.ROOT_PATH.joinpath("docs", "data.json")
     with open(path, "r", encoding="utf-8") as f:
         return json.load(f)
 
