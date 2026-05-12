@@ -8,10 +8,10 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 from alembic import context
 # 导入项目配置和模型基类
 from src.core.config import settings
-from src.models import get_models_metadata
+from src.core.loader import models_metadata
 
 # 自动扫描加载所有模型并获取 metadata
-target_metadata = get_models_metadata()
+target_metadata = models_metadata()
 
 # this is the Alembic Config object
 config = context.config
