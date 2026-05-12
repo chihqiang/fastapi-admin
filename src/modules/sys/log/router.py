@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.core.database import get_db
 from src.core.dependencies import AuthPermission
-from src.models import Account
+from src.models.auth import Account
 from src.modules.sys.log.schemas import LogListRequest, LogListResponse
 from src.modules.sys.log.service import LogService
 from src.schemas.response import ResponseSchema, success

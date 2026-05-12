@@ -6,7 +6,7 @@ from src.modules.sys.menu.router import router as menu_router
 from src.modules.sys.role.router import router as role_router
 
 # 创建系统模块路由
-router = APIRouter(prefix="/sys", tags=["系统管理"])
+router = APIRouter(prefix="/sys")
 
 # 包含账号管理路由
 router.include_router(account_router)
