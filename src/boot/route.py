@@ -16,6 +16,7 @@
 """
 
 import importlib
+import logging
 from pathlib import Path
 
 from fastapi import APIRouter, FastAPI
@@ -38,13 +39,15 @@ def register_routers(app: FastAPI) -> None:
     """
     prefix = settings.API_V1_PREFIX
     modules_path = settings.ROOT_PATH / Path(*MODULES_PACKAGE.split("."))
+    registered_modules: list[str] = []
     for path in modules_path.iterdir():
         if not path.is_dir() or path.name.startswith("_"):
             continue
         router = _get_router(path.name)
         if isinstance(router, APIRouter):
             app.include_router(router, prefix=prefix)
-
+            registered_modules.append(path.name)
+    logging.info(f"成功注册路由模块: {registered_modules}")
 
 def _get_router(module_name: str) -> APIRouter | None:
     """
