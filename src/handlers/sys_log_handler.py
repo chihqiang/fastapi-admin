@@ -64,7 +64,7 @@ class SysLogHandler:
             response_json = self._parse_response_json(response)
 
             # 4. 计算处理耗时
-            process_time = f"{(start_time - start_time):.2f}s"
+            process_time = f"{(time.time() - start_time):.2f}s"
 
             # 5. 获取操作用户信息
             account_id, account_name = self._get_user_from_request(request)

@@ -1,55 +1,11 @@
 """Tests for menu service."""
 
 import pytest
-import pytest_asyncio
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.models.auth import Menu
-from src.modules.sys.menu.repository import MenuRepository
-from src.modules.sys.menu.schemas import (MenuCreate, MenuListRequest,
-                                          MenuUpdate)
-from src.modules.sys.menu.service import (create_menu, get_all_menus,
-                                          get_menu_detail, get_menu_list,
-                                          update_menu)
-
-
-class TestMenuRepository:
-    """Tests for MenuRepository."""
-
-    @pytest_asyncio.fixture
-    async def repo(self, db_session: AsyncSession) -> MenuRepository:
-        """Create repository instance."""
-        return MenuRepository(db_session)
-
-    @pytest.mark.asyncio
-    async def test_get_by_name(self, repo: MenuRepository, test_menu: Menu):
-        """Test getting menu by name."""
-        menu = await repo.get_by_name("Test Menu")
-
-        assert menu is not None
-        assert menu.name == "Test Menu"
-
-    @pytest.mark.asyncio
-    async def test_get_by_name_not_found(self, repo: MenuRepository):
-        """Test getting non-existent menu by name."""
-        menu = await repo.get_by_name("NonExistent Menu")
-
-        assert menu is None
-
-    @pytest.mark.asyncio
-    async def test_list_all(self, repo: MenuRepository, test_menu: Menu):
-        """Test listing all menus."""
-        menus = await repo.list_all()
-
-        assert len(menus) >= 1
-
-    @pytest.mark.asyncio
-    async def test_list_by_ids(self, repo: MenuRepository, test_menu: Menu):
-        """Test listing menus by IDs."""
-        menus = await repo.list_by_ids([test_menu.id])
-
-        assert len(menus) == 1
-        assert menus[0].id == test_menu.id
+from src.modules.sys.menu.schemas import MenuCreate, MenuListRequest, MenuUpdate
+from src.modules.sys.menu.service import MenuService
 
 
 class TestMenuService:
@@ -59,7 +15,8 @@ class TestMenuService:
     async def test_get_menu_list(self, db_session: AsyncSession, test_menu: Menu):
         """Test getting menu list."""
         request = MenuListRequest(page=1, size=10)
-        result = await get_menu_list(request, db_session)
+        service = MenuService(db_session)
+        result = await service.get_list(request)
 
         assert result.total >= 1
         assert len(result.data) >= 1
@@ -68,7 +25,8 @@ class TestMenuService:
     @pytest.mark.asyncio
     async def test_get_menu_detail(self, db_session: AsyncSession, test_menu: Menu):
         """Test getting menu detail."""
-        result = await get_menu_detail(test_menu.id, db_session)
+        service = MenuService(db_session)
+        result = await service.get_detail(test_menu.id)
 
         assert result.id == test_menu.id
         assert result.name == "Test Menu"
@@ -76,8 +34,9 @@ class TestMenuService:
     @pytest.mark.asyncio
     async def test_get_menu_detail_not_found(self, db_session: AsyncSession):
         """Test getting non-existent menu detail."""
+        service = MenuService(db_session)
         with pytest.raises(Exception) as exc_info:
-            await get_menu_detail(99999, db_session)
+            await service.get_detail(99999)
         assert "菜单不存在" in str(exc_info.value)
 
     @pytest.mark.asyncio
@@ -91,7 +50,8 @@ class TestMenuService:
             sort=1,
             status=True,
         )
-        result = await create_menu(menu_data, db_session)
+        service = MenuService(db_session)
+        result = await service.create(menu_data)
 
         assert result.id is not None
         assert result.name == "New Menu"
@@ -107,9 +67,9 @@ class TestMenuService:
             menu_type=2,
             path="/another-path",
         )
-
+        service = MenuService(db_session)
         with pytest.raises(Exception) as exc_info:
-            await create_menu(menu_data, db_session)
+            await service.create(menu_data)
         assert "菜单名称已存在" in str(exc_info.value)
 
     @pytest.mark.asyncio
@@ -124,7 +84,8 @@ class TestMenuService:
             sort=10,
             status=True,
         )
-        result = await update_menu(test_menu.id, update_data, db_session)
+        service = MenuService(db_session)
+        result = await service.update(test_menu.id, update_data)
 
         assert result.name == "Updated Menu"
         assert result.path == "/updated-path"
@@ -133,7 +94,8 @@ class TestMenuService:
     @pytest.mark.asyncio
     async def test_get_all_menus(self, db_session: AsyncSession, test_menu: Menu):
         """Test getting all menus."""
-        result = await get_all_menus(db_session)
+        service = MenuService(db_session)
+        result = await service.get_all()
 
         assert len(result) >= 1
         assert any(m.name == "Test Menu" for m in result)

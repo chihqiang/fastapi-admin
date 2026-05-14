@@ -11,6 +11,7 @@ from sqlalchemy.pool import StaticPool
 
 from src.core.database import Base
 from src.models.auth import Account, Menu, Role
+from src.utils.hashs import pwd
 
 
 @pytest.fixture(scope="session")
@@ -52,7 +53,7 @@ async def test_account(db_session: AsyncSession) -> Account:
         email="test@example.com",
         status=True,
     )
-    account.set_password("test123")
+    account.password = pwd.set_password_hash("test123")
     db_session.add(account)
     await db_session.commit()
     await db_session.refresh(account)
